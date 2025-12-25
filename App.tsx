@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import BoardView from './components/BoardView';
-import ListView from './components/ListView';
-import ReportsView from './components/ReportsView';
-import TeamView from './components/TeamView';
-import SettingsView from './components/SettingsView';
-import IssueModal from './components/IssueModal';
-import CreateIssueModal from './components/CreateIssueModal';
-import AddMemberModal from './components/AddMemberModal';
+import Sidebar from './components/organisms/Sidebar';
+import Header from './components/organisms/Header';
+import BoardView from './components/pages/BoardView';
+import ListView from './components/pages/ListView';
+import ReportsView from './components/pages/ReportsView';
+import TeamView from './components/pages/TeamView';
+import SettingsView from './components/pages/SettingsView';
+import IssueModal from './components/organisms/IssueModal';
+import CreateIssueModal from './components/organisms/CreateIssueModal';
+import AddMemberModal from './components/organisms/AddMemberModal';
 import { ViewMode, Task, Status, User } from './types';
 import { USERS, TASKS, SPRINTS } from './constants';
 
