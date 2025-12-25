@@ -1,0 +1,5 @@
+{
+  "name": "TaskFlow - Modern Project Management",
+  "description": "A streamlined, Jira-inspired project management tool with Kanban, List, and Analytics views, featuring a dark/light mode toggle.",
+  "requestFramePermissions": []
+}
