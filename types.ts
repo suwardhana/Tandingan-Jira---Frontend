@@ -32,6 +32,15 @@ export interface Comment {
   createdAt: string;
 }
 
+export interface Subtask {
+  id: string;
+  taskId: string;
+  title: string;
+  completed: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Sprint {
   id: string;
   name: string;
@@ -57,7 +66,7 @@ export interface Task {
   updatedAt: string;
   labels: string[];
   comments?: Comment[];
-  subtasks?: { id: string; title: string; completed: boolean }[];
+  subtasks?: Subtask[];
   attachments?: { name: string; size: string; type: 'pdf' | 'image' | 'other' }[];
 }
 

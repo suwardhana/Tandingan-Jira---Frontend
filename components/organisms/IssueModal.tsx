@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Task, User, Priority, Status, IssueType } from "../../types";
+import { Task, User, Priority, Status, IssueType, Subtask } from "../../types";
 import Avatar from "../atoms/Avatar";
 import PriorityIcon from "../atoms/PriorityIcon";
 
@@ -10,6 +10,9 @@ interface IssueModalProps {
   users: User[];
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
   onAddComment: (taskId: string, text: string) => void;
+  onAddSubtask?: (taskId: string, title: string) => void;
+  onDeleteSubtask?: (subtaskId: string) => void;
+  onToggleSubtask?: (subtaskId: string, completed: boolean) => void;
 }
 
 const IssueModal: React.FC<IssueModalProps> = ({
@@ -19,6 +22,9 @@ const IssueModal: React.FC<IssueModalProps> = ({
   users,
   onUpdateTask,
   onAddComment,
+  onAddSubtask,
+  onDeleteSubtask,
+  onToggleSubtask,
 }) => {
   const [newComment, setNewComment] = useState("");
   const [activeTab, setActiveTab] = useState<"comments" | "history">(
@@ -27,14 +33,23 @@ const IssueModal: React.FC<IssueModalProps> = ({
   const [isLabelInputVisible, setIsLabelInputVisible] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [isTypePickerOpen, setIsTypePickerOpen] = useState(false);
+  const [isSubtaskInputVisible, setIsSubtaskInputVisible] = useState(false);
+  const [newSubtask, setNewSubtask] = useState("");
   const labelInputRef = useRef<HTMLInputElement>(null);
   const typePickerRef = useRef<HTMLDivElement>(null);
+  const subtaskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isLabelInputVisible && labelInputRef.current) {
       labelInputRef.current.focus();
     }
   }, [isLabelInputVisible]);
+
+  useEffect(() => {
+    if (isSubtaskInputVisible && subtaskInputRef.current) {
+      subtaskInputRef.current.focus();
+    }
+  }, [isSubtaskInputVisible]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,6 +91,27 @@ const IssueModal: React.FC<IssueModalProps> = ({
   const handleRemoveLabel = (label: string) => {
     const labels = task.labels || [];
     onUpdateTask(task.id, { labels: labels.filter((l) => l !== label) });
+  };
+
+  const handleAddSubtask = () => {
+    if (!newSubtask.trim()) return;
+    if (onAddSubtask) {
+      onAddSubtask(task.id, newSubtask.trim());
+    }
+    setNewSubtask("");
+    setIsSubtaskInputVisible(false);
+  };
+
+  const handleDeleteSubtask = (subtaskId: string) => {
+    if (onDeleteSubtask) {
+      onDeleteSubtask(subtaskId);
+    }
+  };
+
+  const handleToggleSubtask = (subtaskId: string, completed: boolean) => {
+    if (onToggleSubtask) {
+      onToggleSubtask(subtaskId, completed);
+    }
   };
 
   const insertMarkdown = (syntax: string) => {
@@ -164,11 +200,10 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 title="Change issue type"
               >
                 <span
-                  className={`material-symbols-outlined text-2xl ${
-                    task.type === IssueType.BUG
-                      ? "text-red-500"
-                      : "text-blue-500"
-                  }`}
+                  className={`material-symbols-outlined text-2xl ${task.type === IssueType.BUG
+                    ? "text-red-500"
+                    : "text-blue-500"
+                    }`}
                 >
                   {task.type === IssueType.BUG ? "bug_report" : "check_box"}
                 </span>
@@ -186,18 +221,16 @@ const IssueModal: React.FC<IssueModalProps> = ({
                         onUpdateTask(task.id, { type });
                         setIsTypePickerOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${
-                        task.type === type
-                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                          : "text-slate-700 dark:text-slate-300"
-                      }`}
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${task.type === type
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                        : "text-slate-700 dark:text-slate-300"
+                        }`}
                     >
                       <span
-                        className={`material-symbols-outlined text-[20px] ${
-                          type === IssueType.BUG
-                            ? "text-red-500"
-                            : "text-blue-500"
-                        }`}
+                        className={`material-symbols-outlined text-[20px] ${type === IssueType.BUG
+                          ? "text-red-500"
+                          : "text-blue-500"
+                          }`}
                       >
                         {type === IssueType.BUG ? "bug_report" : "check_box"}
                       </span>
@@ -295,51 +328,115 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 </div>
               </div>
 
-              {task.subtasks && task.subtasks.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                      Subtasks
-                    </h3>
-                    <div className="h-1.5 w-24 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500"
-                        style={{
-                          width: `${
-                            (task.subtasks.filter((s) => s.completed).length /
-                              task.subtasks.length) *
-                            100
-                          }%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {task.subtasks.map((sub) => (
-                      <div
-                        key={sub.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 group cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={sub.completed}
-                          readOnly
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span
-                          className={`text-sm ${
-                            sub.completed
-                              ? "line-through text-slate-400"
-                              : "text-slate-700 dark:text-slate-200"
-                          }`}
-                        >
-                          {sub.title}
-                        </span>
+              {/* Subtasks Section - Always visible */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    Subtasks
+                  </h3>
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {task.subtasks.filter((s) => s.completed).length} of{" "}
+                        {task.subtasks.length}
+                      </span>
+                      <div className="h-1.5 w-24 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 transition-all"
+                          style={{
+                            width: `${(task.subtasks.filter((s) => s.completed).length /
+                                task.subtasks.length) *
+                              100
+                              }%`,
+                          }}
+                        ></div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
+                <div className="flex flex-col gap-2">
+                  {task.subtasks?.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={sub.completed}
+                        onChange={(e) =>
+                          handleToggleSubtask(sub.id, e.target.checked)
+                        }
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span
+                        className={`text-sm flex-1 ${sub.completed
+                            ? "line-through text-slate-400"
+                            : "text-slate-700 dark:text-slate-200"
+                          }`}
+                      >
+                        {sub.title}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteSubtask(sub.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all"
+                        title="Delete subtask"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-red-500">
+                          delete
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add Subtask Input */}
+                  {isSubtaskInputVisible ? (
+                    <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <span className="material-symbols-outlined text-slate-400 text-[20px]">
+                        add_circle
+                      </span>
+                      <input
+                        ref={subtaskInputRef}
+                        type="text"
+                        value={newSubtask}
+                        onChange={(e) => setNewSubtask(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleAddSubtask();
+                          if (e.key === "Escape") {
+                            setIsSubtaskInputVisible(false);
+                            setNewSubtask("");
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!newSubtask.trim()) {
+                            setIsSubtaskInputVisible(false);
+                          }
+                        }}
+                        className="flex-1 bg-transparent border-none text-sm text-slate-700 dark:text-slate-200 focus:ring-0 p-0"
+                        placeholder="Type subtask title and press Enter..."
+                      />
+                      <button
+                        onClick={handleAddSubtask}
+                        disabled={!newSubtask.trim()}
+                        className="text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          check
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsSubtaskInputVisible(true)}
+                      className="flex items-center gap-2 p-2 text-sm text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        add
+                      </span>
+                      <span>Add subtask</span>
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -360,21 +457,19 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 <div className="flex gap-6 border-b border-gray-200 dark:border-dark-border">
                   <button
                     onClick={() => setActiveTab("comments")}
-                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
-                      activeTab === "comments"
-                        ? "text-blue-600 border-blue-600"
-                        : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    }`}
+                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeTab === "comments"
+                      ? "text-blue-600 border-blue-600"
+                      : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      }`}
                   >
                     Comments
                   </button>
                   <button
                     onClick={() => setActiveTab("history")}
-                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
-                      activeTab === "history"
-                        ? "text-blue-600 border-blue-600"
-                        : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                    }`}
+                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeTab === "history"
+                      ? "text-blue-600 border-blue-600"
+                      : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                      }`}
                   >
                     History
                   </button>

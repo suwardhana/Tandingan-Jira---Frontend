@@ -135,9 +135,31 @@ const App: React.FC = () => {
   };
 
   // Add Comment Handler
-  const handleAddComment = (taskId: string, text: string) => {
-    // Comment API not implemented in this pass yet, just local state or skipping
-    console.warn("Comment API pending");
+  const handleAddComment = async (taskId: string, text: string) => {
+    try {
+      const createdComment = await api.createComment(taskId, {
+        text,
+        userId: currentUser.id,
+      });
+
+      // Update local state
+      const updatedTasks = tasks.map((t) =>
+        t.id === taskId
+          ? { ...t, comments: [...(t.comments || []), createdComment] }
+          : t
+      );
+      setTasks(updatedTasks);
+
+      // Update selected task if it's the one being modified
+      if (selectedTask && selectedTask.id === taskId) {
+        setSelectedTask({
+          ...selectedTask,
+          comments: [...(selectedTask.comments || []), createdComment],
+        });
+      }
+    } catch (e) {
+      console.error("Failed to add comment", e);
+    }
   };
 
   // Add Member Handler
@@ -154,6 +176,83 @@ const App: React.FC = () => {
       setUsers([...users, createdUser]);
     } catch (e) {
       console.error("Failed to add member", e);
+    }
+  };
+
+  // Subtask Handlers
+  const handleAddSubtask = async (taskId: string, title: string) => {
+    try {
+      const createdSubtask = await api.createSubtask(taskId, { title });
+
+      // Update local state
+      const updatedTasks = tasks.map((t) =>
+        t.id === taskId
+          ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] }
+          : t
+      );
+      setTasks(updatedTasks);
+
+      // Update selected task if it's the one being modified
+      if (selectedTask && selectedTask.id === taskId) {
+        setSelectedTask({
+          ...selectedTask,
+          subtasks: [...(selectedTask.subtasks || []), createdSubtask],
+        });
+      }
+    } catch (e) {
+      console.error("Failed to add subtask", e);
+    }
+  };
+
+  const handleDeleteSubtask = async (subtaskId: string) => {
+    try {
+      await api.deleteSubtask(subtaskId);
+
+      // Update local state - remove subtask from all tasks
+      const updatedTasks = tasks.map((t) => ({
+        ...t,
+        subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
+      }));
+      setTasks(updatedTasks);
+
+      // Update selected task if needed
+      if (selectedTask) {
+        setSelectedTask({
+          ...selectedTask,
+          subtasks: (selectedTask.subtasks || []).filter(
+            (s) => s.id !== subtaskId
+          ),
+        });
+      }
+    } catch (e) {
+      console.error("Failed to delete subtask", e);
+    }
+  };
+
+  const handleToggleSubtask = async (subtaskId: string, completed: boolean) => {
+    try {
+      await api.updateSubtask(subtaskId, { completed });
+
+      // Update local state
+      const updatedTasks = tasks.map((t) => ({
+        ...t,
+        subtasks: (t.subtasks || []).map((s) =>
+          s.id === subtaskId ? { ...s, completed } : s
+        ),
+      }));
+      setTasks(updatedTasks);
+
+      // Update selected task if needed
+      if (selectedTask) {
+        setSelectedTask({
+          ...selectedTask,
+          subtasks: (selectedTask.subtasks || []).map((s) =>
+            s.id === subtaskId ? { ...s, completed } : s
+          ),
+        });
+      }
+    } catch (e) {
+      console.error("Failed to toggle subtask", e);
     }
   };
 
@@ -228,6 +327,9 @@ const App: React.FC = () => {
         users={users}
         onUpdateTask={handleUpdateTask}
         onAddComment={handleAddComment}
+        onAddSubtask={handleAddSubtask}
+        onDeleteSubtask={handleDeleteSubtask}
+        onToggleSubtask={handleToggleSubtask}
       />
 
       <CreateIssueModal

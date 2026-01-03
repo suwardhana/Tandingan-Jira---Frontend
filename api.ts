@@ -1,4 +1,4 @@
-import { Task, User, Sprint } from "./types";
+import { Task, User, Sprint, Subtask, Comment } from "./types";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3344/api";
@@ -111,5 +111,91 @@ export const api = {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete task");
+  },
+
+  // Subtasks
+  fetchSubtasks: async (taskId: string): Promise<Subtask[]> => {
+    const res = await fetch(`${BASE_URL}/tasks/${taskId}/subtasks`);
+    if (!res.ok) throw new Error("Failed to fetch subtasks");
+    const data = await res.json();
+    return fromApi<Subtask[]>(data);
+  },
+
+  createSubtask: async (
+    taskId: string,
+    subtask: Partial<Subtask>
+  ): Promise<Subtask> => {
+    const res = await fetch(`${BASE_URL}/tasks/${taskId}/subtasks`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(toApi(subtask)),
+    });
+    if (!res.ok) throw new Error("Failed to create subtask");
+    const data = await res.json();
+    return fromApi<Subtask>(data);
+  },
+
+  updateSubtask: async (
+    id: string,
+    updates: Partial<Subtask>
+  ): Promise<Subtask> => {
+    const res = await fetch(`${BASE_URL}/subtasks/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(toApi(updates)),
+    });
+    if (!res.ok) throw new Error("Failed to update subtask");
+    const data = await res.json();
+    return fromApi<Subtask>(data);
+  },
+
+  deleteSubtask: async (id: string): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/subtasks/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete subtask");
+  },
+
+  // Comments
+  fetchComments: async (taskId: string): Promise<Comment[]> => {
+    const res = await fetch(`${BASE_URL}/tasks/${taskId}/comments`);
+    if (!res.ok) throw new Error("Failed to fetch comments");
+    const data = await res.json();
+    return fromApi<Comment[]>(data);
+  },
+
+  createComment: async (
+    taskId: string,
+    comment: Partial<Comment>
+  ): Promise<Comment> => {
+    const res = await fetch(`${BASE_URL}/tasks/${taskId}/comments`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(toApi(comment)),
+    });
+    if (!res.ok) throw new Error("Failed to create comment");
+    const data = await res.json();
+    return fromApi<Comment>(data);
+  },
+
+  updateComment: async (
+    id: string,
+    updates: Partial<Comment>
+  ): Promise<Comment> => {
+    const res = await fetch(`${BASE_URL}/comments/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(toApi(updates)),
+    });
+    if (!res.ok) throw new Error("Failed to update comment");
+    const data = await res.json();
+    return fromApi<Comment>(data);
+  },
+
+  deleteComment: async (id: string): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/comments/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete comment");
   },
 };
