@@ -31,7 +31,8 @@ const Header: React.FC<HeaderProps> = React.memo(
 
     return (
       <>
-        <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 dark:border-dark-border dark:bg-slate-900 sm:px-5">
+        <header className="z-20 flex h-14 shrink-0 items-center border-b border-gray-200 bg-white px-3 dark:border-dark-border dark:bg-slate-900 sm:px-5">
+          {/* Left section */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Hamburger — mobile & tablet */}
             <button
@@ -82,8 +83,8 @@ const Header: React.FC<HeaderProps> = React.memo(
             )}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Search */}
+          {/* Center — search */}
+          <div className="absolute left-1/2 -translate-x-1/2">
             <div className="group relative hidden sm:block">
               <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-xl text-slate-400 transition-colors group-focus-within:text-jira-blue">
                 search
@@ -93,7 +94,7 @@ const Header: React.FC<HeaderProps> = React.memo(
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => onSearch(e.target.value)}
-                className="w-32 rounded-md border border-transparent bg-gray-100 py-1.5 pl-9 pr-8 text-sm text-text-primary placeholder-slate-400 transition-all duration-300 focus:w-48 focus:border-jira-blue focus:ring-1 focus:ring-jira-blue dark:bg-slate-800 dark:text-white lg:w-48 lg:focus:w-64"
+                className="w-48 rounded-md border border-transparent bg-gray-100 py-1.5 pl-9 pr-8 text-sm text-text-primary placeholder-slate-400 transition-all duration-300 focus:w-64 focus:border-jira-blue focus:ring-1 focus:ring-jira-blue dark:bg-slate-800 dark:text-white"
               />
               {searchQuery && (
                 <button
@@ -104,9 +105,10 @@ const Header: React.FC<HeaderProps> = React.memo(
                 </button>
               )}
             </div>
+          </div>
 
-            <div className="mx-1 hidden h-5 w-px bg-gray-200 dark:bg-slate-700 sm:block" />
-
+          {/* Right section */}
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {/* Notifications */}
             <button className="relative rounded-full p-1.5 text-slate-500 transition-colors hover:bg-blue-50 hover:text-jira-blue dark:text-slate-400 dark:hover:bg-blue-500/10 dark:hover:text-jira-blue">
               <span className="material-symbols-outlined">notifications</span>
