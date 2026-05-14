@@ -30,6 +30,12 @@ interface BoardViewProps {
   onTaskClick: (task: Task) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onReorder: (status: Status, orderedTaskIds: string[]) => void;
+  onStartSprint: (sprintId: string) => void;
+  onCompleteSprint: (sprintId: string) => void;
+  filterAssigneeId: string | null;
+  onFilterAssignee: (id: string | null) => void;
+  showMyTasksOnly: boolean;
+  onToggleMyTasks: () => void;
 }
 
 // ── Sortable card wrapper ─────────────────────────────────────────────────
@@ -127,6 +133,12 @@ const BoardView: React.FC<BoardViewProps> = ({
   onTaskClick,
   onTaskUpdate,
   onReorder,
+  onStartSprint,
+  onCompleteSprint,
+  filterAssigneeId,
+  onFilterAssignee,
+  showMyTasksOnly,
+  onToggleMyTasks,
 }) => {
   const columns = Object.values(Status);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -197,49 +209,151 @@ const BoardView: React.FC<BoardViewProps> = ({
     setActiveTask(null);
   };
 
+  // ── Sprint progress ────────────────────────────────────────────────────
+  const parseDate = (d: string) => {
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const startDate = parseDate(sprint.startDate);
+  const endDate = parseDate(sprint.endDate);
+  const now = new Date();
+
+  let progressPct = 0;
+  let progressLabel = "";
+  if (sprint.status === "closed") {
+    progressPct = 100;
+    progressLabel = "Completed";
+  } else if (sprint.status === "future") {
+    progressPct = 0;
+    progressLabel = startDate ? `Starts ${sprint.startDate}` : "Upcoming";
+  } else if (startDate && endDate) {
+    const total = endDate.getTime() - startDate.getTime();
+    const elapsed = now.getTime() - startDate.getTime();
+    progressPct = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+    const totalDays = Math.ceil(total / (1000 * 60 * 60 * 24));
+    const dayNum = Math.min(totalDays, Math.max(1, Math.ceil(elapsed / (1000 * 60 * 60 * 24))));
+    progressLabel = `Day ${dayNum} of ${totalDays}`;
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Sprint Header */}
-      <div className="flex shrink-0 flex-col justify-between gap-3 px-3 pb-3 sm:px-6 sm:pb-4 md:flex-row md:items-center">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h2 className="text-lg font-bold text-text-primary dark:text-white sm:text-xl">
-              {sprint.name}
-            </h2>
-            <span
-              className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
-                sprint.status === "active"
-                  ? "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                  : "border-slate-200 bg-slate-100 text-slate-600"
-              }`}
-            >
-              {sprint.status}
-            </span>
-            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline">
-              {sprint.startDate} - {sprint.endDate}
-            </span>
-          </div>
-          <p className="mt-1 max-w-2xl truncate text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-            {sprint.goal}
-          </p>
-        </div>
-        <div className="hidden items-center gap-2 md:flex">
-          <div className="mr-2 flex -space-x-2">
-            {users.slice(0, 3).map((u) => (
-              <img
-                key={u.id}
-                src={u.avatar}
-                className="size-8 rounded-full border-2 border-white dark:border-dark-bg"
-                title={u.name}
-                alt={u.name}
-              />
-            ))}
-            {users.length > 3 && (
-              <div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-xs font-bold text-slate-500 dark:border-dark-bg dark:bg-slate-700 dark:text-slate-300">
-                +{users.length - 3}
+      <div className="shrink-0 space-y-3 px-3 pb-1 pt-2 sm:px-6 sm:pt-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h2 className="text-lg font-bold text-text-primary dark:text-white sm:text-xl">
+                {sprint.name}
+              </h2>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
+                  sprint.status === "active"
+                    ? "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                    : sprint.status === "closed"
+                      ? "border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+                      : "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                }`}
+              >
+                {sprint.status}
+              </span>
+              <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline">
+                {sprint.startDate} - {sprint.endDate}
+              </span>
+            </div>
+            {sprint.goal && (
+              <p className="mt-1 max-w-2xl truncate text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                {sprint.goal}
+              </p>
+            )}
+
+            {/* Progress bar */}
+            <div className="mt-2 flex max-w-md items-center gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    sprint.status === "closed"
+                      ? "bg-emerald-500"
+                      : progressPct > 80
+                        ? "bg-amber-500"
+                        : "bg-jira-blue"
+                  }`}
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
+              <span className="shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">
+                {progressLabel}
+              </span>
+            </div>
+          </div>
+
+          {/* Sprint actions */}
+          <div className="flex shrink-0 items-center gap-2">
+            {sprint.status === "future" && (
+              <button
+                onClick={() => onStartSprint(sprint.id)}
+                className="flex items-center gap-1.5 rounded-lg bg-jira-blue px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-jira-blue-hover active:scale-95"
+              >
+                <span className="material-symbols-outlined text-base">play_arrow</span>
+                Start Sprint
+              </button>
+            )}
+            {sprint.status === "active" && (
+              <button
+                onClick={() => onCompleteSprint(sprint.id)}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition-all hover:border-emerald-300 hover:text-emerald-700 dark:border-dark-border dark:bg-dark-surface dark:text-slate-300 dark:hover:border-emerald-600 dark:hover:text-emerald-400"
+              >
+                <span className="material-symbols-outlined text-base">check</span>
+                Complete Sprint
+              </button>
             )}
           </div>
+        </div>
+
+        {/* Filter bar */}
+        <div className="flex items-center gap-2 border-t border-gray-200 pt-2 dark:border-dark-border">
+          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">Filter</span>
+          {users.map((u) => (
+            <button
+              key={u.id}
+              onClick={() =>
+                onFilterAssignee(filterAssigneeId === u.id ? null : u.id)
+              }
+              className={`shrink-0 rounded-full transition-all hover:ring-2 hover:ring-jira-blue/50 ${
+                filterAssigneeId === u.id ? "ring-2 ring-jira-blue" : "opacity-60 hover:opacity-100"
+              }`}
+              title={u.name}
+            >
+              <img
+                src={u.avatar}
+                alt={u.name}
+                className="size-7 rounded-full border-2 border-white dark:border-dark-bg"
+              />
+            </button>
+          ))}
+          <div className="mx-1 h-5 w-px bg-gray-200 dark:bg-slate-700" />
+          <button
+            onClick={onToggleMyTasks}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+              showMyTasksOnly
+                ? "border-jira-blue bg-blue-50 text-jira-blue dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-300"
+                : "border-gray-200 text-slate-500 hover:border-gray-300 dark:border-dark-border dark:text-slate-400 dark:hover:border-slate-500"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">person</span>
+            Mine
+          </button>
+          {(filterAssigneeId || showMyTasksOnly) && (
+            <button
+              onClick={() => {
+                onFilterAssignee(null);
+                if (showMyTasksOnly) onToggleMyTasks();
+              }}
+              className="ml-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 

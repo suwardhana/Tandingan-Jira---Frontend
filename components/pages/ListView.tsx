@@ -9,14 +9,72 @@ interface ListViewProps {
   users: User[];
   onTaskClick: (task: Task) => void;
   onCreateClick: () => void;
+  filterAssigneeId: string | null;
+  onFilterAssignee: (id: string | null) => void;
+  showMyTasksOnly: boolean;
+  onToggleMyTasks: () => void;
 }
 
 const ListView: React.FC<ListViewProps> = React.memo(
-  ({ tasks, users, onTaskClick, onCreateClick }) => {
+  ({
+    tasks,
+    users,
+    onTaskClick,
+    onCreateClick,
+    filterAssigneeId,
+    onFilterAssignee,
+    showMyTasksOnly,
+    onToggleMyTasks,
+  }) => {
     const getUser = (id?: string) => users.find((u) => u.id === id);
 
     return (
       <div className="flex h-full flex-col overflow-hidden px-3 pb-20 sm:px-6">
+        {/* Filter bar */}
+        <div className="mb-3 flex items-center gap-2">
+          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">Filter</span>
+          {users.map((u) => (
+            <button
+              key={u.id}
+              onClick={() =>
+                onFilterAssignee(filterAssigneeId === u.id ? null : u.id)
+              }
+              className={`shrink-0 rounded-full transition-all hover:ring-2 hover:ring-jira-blue/50 ${
+                filterAssigneeId === u.id ? "ring-2 ring-jira-blue" : "opacity-60 hover:opacity-100"
+              }`}
+              title={u.name}
+            >
+              <img
+                src={u.avatar}
+                alt={u.name}
+                className="size-6 rounded-full border-2 border-white dark:border-dark-bg"
+              />
+            </button>
+          ))}
+          <div className="mx-1 h-5 w-px bg-gray-200 dark:bg-slate-700" />
+          <button
+            onClick={onToggleMyTasks}
+            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all ${
+              showMyTasksOnly
+                ? "border-jira-blue bg-blue-50 text-jira-blue dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-300"
+                : "border-gray-200 text-slate-500 hover:border-gray-300 dark:border-dark-border dark:text-slate-400 dark:hover:border-slate-500"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">person</span>
+            Mine
+          </button>
+          {(filterAssigneeId || showMyTasksOnly) && (
+            <button
+              onClick={() => {
+                onFilterAssignee(null);
+                if (showMyTasksOnly) onToggleMyTasks();
+              }}
+              className="ml-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
         <div className="custom-scrollbar flex-1 overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-bg">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-surface">

@@ -72,6 +72,17 @@ export const api = {
     return fromApi<Sprint>(data);
   },
 
+  updateSprint: async (id: string, updates: Partial<Sprint>): Promise<Sprint> => {
+    const res = await fetch(`${BASE_URL}/sprints/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(toApi(updates)),
+    });
+    if (!res.ok) throw new Error("Failed to update sprint");
+    const data = await res.json();
+    return fromApi<Sprint>(data);
+  },
+
   // Tasks
   fetchTasks: async (): Promise<Task[]> => {
     const res = await fetch(`${BASE_URL}/tasks`);

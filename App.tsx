@@ -37,6 +37,9 @@ const AppLayout: React.FC = () => {
   const [isDark, setIsDark] = useState(true);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAssigneeId, setFilterAssigneeId] = useState<string | null>(null);
+  const [showMyTasksOnly, setShowMyTasksOnly] = useState(false);
 
   // ── Data state ───────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -89,10 +92,6 @@ const AppLayout: React.FC = () => {
 
   // ── Derived data ────────────────────────────────────────────────────────
   const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
-  const sprintTasks = useMemo(
-    () => tasks.filter((t) => t.sprintId === currentSprintId),
-    [tasks, currentSprintId],
-  );
   const currentUser = users[0] || {
     id: "temp",
     name: "Loading...",
@@ -100,6 +99,25 @@ const AppLayout: React.FC = () => {
     role: "",
     avatar: "",
   };
+
+  const sprintTasks = useMemo(() => {
+    let filtered = tasks.filter((t) => t.sprintId === currentSprintId);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.key.toLowerCase().includes(q),
+      );
+    }
+    if (showMyTasksOnly) {
+      filtered = filtered.filter((t) => t.assigneeId === currentUser.id);
+    }
+    if (filterAssigneeId) {
+      filtered = filtered.filter((t) => t.assigneeId === filterAssigneeId);
+    }
+    return filtered;
+  }, [tasks, currentSprintId, searchQuery, showMyTasksOnly, filterAssigneeId, currentUser.id]);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -292,6 +310,61 @@ const AppLayout: React.FC = () => {
     }
   }, []);
 
+  // ── Sprint lifecycle handlers ────────────────────────────────────────────
+
+  const handleCreateSprint = useCallback(
+    async (sprint: Partial<Sprint>) => {
+      const tempId = `s${Date.now()}`;
+      const newSprint: Sprint = {
+        id: tempId,
+        name: sprint.name || "New Sprint",
+        startDate: sprint.startDate || getCurrentDateFormatted(),
+        endDate: sprint.endDate || "",
+        goal: sprint.goal || "",
+        status: "future",
+      };
+      setSprints((prev) => [...prev, newSprint]);
+      try {
+        const created = await api.createSprint(sprint);
+        setSprints((prev) => prev.map((s) => (s.id === tempId ? created : s)));
+        toast("Sprint created", "success");
+      } catch {
+        toast("Sprint saved locally — backend unavailable", "warning");
+      }
+    },
+    [toast],
+  );
+
+  const handleStartSprint = useCallback(
+    async (sprintId: string) => {
+      setSprints((prev) =>
+        prev.map((s) => (s.id === sprintId ? { ...s, status: "active" as const } : s)),
+      );
+      try {
+        await api.updateSprint(sprintId, { status: "active" as const });
+        toast("Sprint started", "success");
+      } catch {
+        toast("Sprint start saved locally", "warning");
+      }
+    },
+    [toast],
+  );
+
+  const handleCompleteSprint = useCallback(
+    async (sprintId: string) => {
+      setSprints((prev) =>
+        prev.map((s) => (s.id === sprintId ? { ...s, status: "closed" as const } : s)),
+      );
+      try {
+        await api.updateSprint(sprintId, { status: "closed" as const });
+        toast("Sprint completed", "success");
+      } catch {
+        toast("Sprint completed locally", "warning");
+      }
+    },
+    [toast],
+  );
+
   // ── View rendering ──────────────────────────────────────────────────────
   const renderContent = () => {
     if (!dataReady) {
@@ -317,6 +390,12 @@ const AppLayout: React.FC = () => {
             onTaskClick={handleTaskClick}
             onTaskUpdate={handleUpdateTask}
             onReorder={handleReorder}
+            onStartSprint={handleStartSprint}
+            onCompleteSprint={handleCompleteSprint}
+            filterAssigneeId={filterAssigneeId}
+            onFilterAssignee={setFilterAssigneeId}
+            showMyTasksOnly={showMyTasksOnly}
+            onToggleMyTasks={() => setShowMyTasksOnly((v) => !v)}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-slate-500">
@@ -330,6 +409,10 @@ const AppLayout: React.FC = () => {
             users={users}
             onTaskClick={handleTaskClick}
             onCreateClick={openCreateModal}
+            filterAssigneeId={filterAssigneeId}
+            onFilterAssignee={setFilterAssigneeId}
+            showMyTasksOnly={showMyTasksOnly}
+            onToggleMyTasks={() => setShowMyTasksOnly((v) => !v)}
           />
         );
       case "reports":
@@ -365,6 +448,9 @@ const AppLayout: React.FC = () => {
           currentSprintId={currentSprintId}
           onSprintChange={setCurrentSprintId}
           onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
+          searchQuery={searchQuery}
+          onSearch={setSearchQuery}
+          onCreateSprint={handleCreateSprint}
         />
 
         <main className="flex-1 overflow-hidden pt-4 sm:pt-6">
