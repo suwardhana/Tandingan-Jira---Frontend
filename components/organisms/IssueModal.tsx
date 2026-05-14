@@ -11,7 +11,10 @@ interface IssueModalProps {
   onClose: () => void;
   users: User[];
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
+  onDeleteTask?: (taskId: string) => void;
   onAddComment: (taskId: string, text: string) => void;
+  onUpdateComment?: (commentId: string, text: string) => void;
+  onDeleteComment?: (commentId: string) => void;
   onAddSubtask?: (taskId: string, title: string) => void;
   onDeleteSubtask?: (subtaskId: string) => void;
   onToggleSubtask?: (subtaskId: string, completed: boolean) => void;
@@ -24,7 +27,10 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
     onClose,
     users,
     onUpdateTask,
+    onDeleteTask,
     onAddComment,
+    onUpdateComment,
+    onDeleteComment,
     onAddSubtask,
     onDeleteSubtask,
     onToggleSubtask,
@@ -38,9 +44,14 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
     const [newSubtask, setNewSubtask] = useState("");
     const [isEditingDescription, setIsEditingDescription] = useState(false);
     const [editDescription, setEditDescription] = useState("");
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editCommentText, setEditCommentText] = useState("");
     const labelInputRef = useRef<HTMLInputElement>(null);
     const typePickerRef = useRef<HTMLDivElement>(null);
     const subtaskInputRef = useRef<HTMLInputElement>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
       if (isLabelInputVisible && labelInputRef.current) {
@@ -59,14 +70,17 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
         if (typePickerRef.current && !typePickerRef.current.contains(event.target as Node)) {
           setIsTypePickerOpen(false);
         }
+        if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+          setIsMoreMenuOpen(false);
+        }
       };
-      if (isTypePickerOpen) {
+      if (isTypePickerOpen || isMoreMenuOpen) {
         document.addEventListener("mousedown", handleClickOutside);
       }
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
-    }, [isTypePickerOpen]);
+    }, [isTypePickerOpen, isMoreMenuOpen]);
 
     if (!isOpen || !task) return null;
 
@@ -136,6 +150,27 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
         year: "numeric",
       });
       onUpdateTask(task.id, { dueDate: formatted });
+    };
+
+    const handleDeleteTask = () => {
+      if (onDeleteTask) {
+        onDeleteTask(task.id);
+        setShowDeleteConfirm(false);
+      }
+    };
+
+    const handleEditCommentStart = (commentId: string, text: string) => {
+      setEditingCommentId(commentId);
+      setEditCommentText(text);
+    };
+
+    const handleEditCommentSave = (commentId: string) => {
+      if (!editCommentText.trim()) return;
+      if (onUpdateComment) {
+        onUpdateComment(commentId, editCommentText.trim());
+      }
+      setEditingCommentId(null);
+      setEditCommentText("");
     };
 
     const dummyHistory = [
@@ -289,9 +324,28 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200">
-                <span className="material-symbols-outlined">more_horiz</span>
-              </button>
+              <div className="relative" ref={moreMenuRef}>
+                <button
+                  onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
+                >
+                  <span className="material-symbols-outlined">more_horiz</span>
+                </button>
+                {isMoreMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-44 animate-[fadeIn_0.1s_ease-out] rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-dark-border dark:bg-dark-surface">
+                    <button
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      Delete issue
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 onClick={onClose}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
@@ -530,8 +584,9 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                       <div className="mb-6 space-y-4">
                         {task.comments?.map((comment) => {
                           const commentUser = users.find((u) => u.id === comment.userId);
+                          const isEditingThis = editingCommentId === comment.id;
                           return (
-                            <div key={comment.id} className="flex gap-3">
+                            <div key={comment.id} className="group flex gap-3">
                               <Avatar
                                 src={commentUser?.avatar}
                                 name={commentUser?.name}
@@ -546,10 +601,61 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                                     {comment.createdAt}
                                   </span>
                                 </div>
-                                <p className="text-sm text-slate-700 dark:text-slate-300">
-                                  {comment.text}
-                                </p>
+                                {isEditingThis ? (
+                                  <div className="flex items-start gap-2">
+                                    <input
+                                      value={editCommentText}
+                                      onChange={(e) => setEditCommentText(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleEditCommentSave(comment.id);
+                                        if (e.key === "Escape") {
+                                          setEditingCommentId(null);
+                                          setEditCommentText("");
+                                        }
+                                      }}
+                                      className="flex-1 rounded border border-blue-500 bg-white px-2 py-1 text-sm text-slate-700 focus:ring-1 focus:ring-blue-500 dark:bg-dark-bg dark:text-white"
+                                      autoFocus
+                                    />
+                                    <button
+                                      onClick={() => handleEditCommentSave(comment.id)}
+                                      className="text-blue-600 hover:text-blue-700"
+                                    >
+                                      <span className="material-symbols-outlined text-[18px]">check</span>
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setEditingCommentId(null);
+                                        setEditCommentText("");
+                                      }}
+                                      className="text-slate-400 hover:text-slate-600"
+                                    >
+                                      <span className="material-symbols-outlined text-[18px]">close</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                                    {comment.text}
+                                  </p>
+                                )}
                               </div>
+                              {!isEditingThis && (
+                                <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                  <button
+                                    onClick={() => handleEditCommentStart(comment.id, comment.text)}
+                                    className="rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                    title="Edit comment"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                                  </button>
+                                  <button
+                                    onClick={() => onDeleteComment?.(comment.id)}
+                                    className="rounded p-1 text-slate-400 hover:text-red-500"
+                                    title="Delete comment"
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -748,6 +854,35 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
               </div>
             </div>
           </div>
+
+          {/* Delete confirmation dialog */}
+          {showDeleteConfirm && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/90 dark:bg-dark-surface/90">
+              <div className="w-80 rounded-xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-dark-border dark:bg-dark-surface">
+                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                  Delete issue?
+                </h3>
+                <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                  This will permanently delete <strong>{task.key}</strong> and all its comments and
+                  subtasks. This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteTask}
+                    className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

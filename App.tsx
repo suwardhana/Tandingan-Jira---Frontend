@@ -211,7 +211,7 @@ const AppLayout: React.FC = () => {
     }
   }, []);
 
-  const handleReorder = useCallback((status: Status, orderedTaskIds: string[]) => {
+  const handleReorder = useCallback(async (status: Status, orderedTaskIds: string[]) => {
     setTasks((prev) =>
       prev.map((t) => {
         const idx = orderedTaskIds.indexOf(t.id);
@@ -221,6 +221,11 @@ const AppLayout: React.FC = () => {
         return t;
       }),
     );
+    try {
+      await api.reorderTasks(status, orderedTaskIds);
+    } catch {
+      console.warn("API unavailable — reorder applied locally only");
+    }
   }, []);
 
   const handleAddComment = useCallback(
@@ -238,6 +243,57 @@ const AppLayout: React.FC = () => {
       }
     },
     [toast, currentUser.id],
+  );
+
+  const handleDeleteTask = useCallback(
+    async (taskId: string) => {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      handleCloseModal();
+      try {
+        await api.deleteTask(taskId);
+        toast("Issue deleted", "success");
+      } catch {
+        toast("Issue deletion saved locally", "warning");
+      }
+    },
+    [toast, handleCloseModal],
+  );
+
+  const handleUpdateComment = useCallback(
+    async (commentId: string, text: string) => {
+      setTasks((prev) =>
+        prev.map((t) => ({
+          ...t,
+          comments: (t.comments || []).map((c) =>
+            c.id === commentId ? { ...c, text } : c,
+          ),
+        })),
+      );
+      try {
+        await api.updateComment(commentId, { text });
+      } catch {
+        console.warn("API unavailable — comment update local only");
+      }
+    },
+    [],
+  );
+
+  const handleDeleteComment = useCallback(
+    async (commentId: string) => {
+      setTasks((prev) =>
+        prev.map((t) => ({
+          ...t,
+          comments: (t.comments || []).filter((c) => c.id !== commentId),
+        })),
+      );
+      try {
+        await api.deleteComment(commentId);
+        toast("Comment deleted", "success");
+      } catch {
+        toast("Comment deletion saved locally", "warning");
+      }
+    },
+    [toast],
   );
 
   const handleAddMember = useCallback(
@@ -467,7 +523,10 @@ const AppLayout: React.FC = () => {
         onClose={handleCloseModal}
         users={users}
         onUpdateTask={handleUpdateTask}
+        onDeleteTask={handleDeleteTask}
         onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
+        onDeleteComment={handleDeleteComment}
         onAddSubtask={handleAddSubtask}
         onDeleteSubtask={handleDeleteSubtask}
         onToggleSubtask={handleToggleSubtask}

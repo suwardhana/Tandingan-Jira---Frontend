@@ -53,6 +53,29 @@ export const api = {
     return fromApi<User>(data);
   },
 
+  fetchUser: async (id: string): Promise<User> => {
+    const res = await fetch(`${BASE_URL}/users/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch user");
+    const data = await res.json();
+    return fromApi<User>(data);
+  },
+
+  updateUser: async (id: string, updates: Partial<User>): Promise<User> => {
+    const res = await fetch(`${BASE_URL}/users/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(toApi(updates)),
+    });
+    if (!res.ok) throw new Error("Failed to update user");
+    const data = await res.json();
+    return fromApi<User>(data);
+  },
+
+  deleteUser: async (id: string): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/users/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete user");
+  },
+
   // Sprints
   fetchSprints: async (): Promise<Sprint[]> => {
     const res = await fetch(`${BASE_URL}/sprints`);
@@ -81,6 +104,18 @@ export const api = {
     if (!res.ok) throw new Error("Failed to update sprint");
     const data = await res.json();
     return fromApi<Sprint>(data);
+  },
+
+  fetchSprint: async (id: string): Promise<Sprint> => {
+    const res = await fetch(`${BASE_URL}/sprints/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch sprint");
+    const data = await res.json();
+    return fromApi<Sprint>(data);
+  },
+
+  deleteSprint: async (id: string): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/sprints/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete sprint");
   },
 
   // Tasks
@@ -113,11 +148,27 @@ export const api = {
     return fromApi<Task>(data);
   },
 
+  fetchTask: async (id: string): Promise<Task> => {
+    const res = await fetch(`${BASE_URL}/tasks/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch task");
+    const data = await res.json();
+    return fromApi<Task>(data);
+  },
+
   deleteTask: async (id: string): Promise<void> => {
     const res = await fetch(`${BASE_URL}/tasks/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete task");
+  },
+
+  reorderTasks: async (status: string, taskIds: string[]): Promise<void> => {
+    const res = await fetch(`${BASE_URL}/tasks/reorder`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(toApi({ status, taskIds })),
+    });
+    if (!res.ok) throw new Error("Failed to reorder tasks");
   },
 
   // Subtasks
