@@ -18,7 +18,7 @@ interface ReportsViewProps {
   sprints: Sprint[];
 }
 
-const ReportsView: React.FC<ReportsViewProps> = ({ tasks, sprints }) => {
+const ReportsView: React.FC<ReportsViewProps> = React.memo(({ tasks, sprints }) => {
   // Calculate Ticket Distribution
   const ticketDistribution = useMemo(() => {
     const distribution = [
@@ -218,6 +218,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ tasks, sprints }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ReportsView;

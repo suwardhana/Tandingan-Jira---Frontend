@@ -24,7 +24,7 @@ const dotMap: Record<string, string> = {
   [Status.DONE]: "bg-green-500",
 };
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = "" }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({ status, className = "" }) => {
   const colors = colorMap[status] || colorMap[Status.TODO];
   const dot = dotMap[status] || dotMap[Status.TODO];
 
@@ -36,6 +36,6 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = "" }) => 
       {status}
     </span>
   );
-};
+});
 
 export default StatusBadge;

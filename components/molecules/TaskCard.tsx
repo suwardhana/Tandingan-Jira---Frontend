@@ -14,13 +14,13 @@ const typeConfig: Record<string, { icon: string; color: string }> = {
   [IssueType.BUG]: { icon: "bug_report", color: "text-red-500" },
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, assignee, onClick }) => {
+const TaskCard: React.FC<TaskCardProps> = React.memo(({ task, assignee, onClick }) => {
   const typeInfo = typeConfig[task.type] || typeConfig[IssueType.TASK];
 
   return (
     <div
       onClick={() => onClick(task)}
-      className="group cursor-pointer touch-manipulation rounded-card border border-gray-200 bg-white shadow-card transition-all hover:border-l-[3px] hover:border-l-jira-blue hover:shadow-card-hover dark:border-slate-700 dark:bg-slate-800 dark:hover:border-l-jira-blue"
+      className="group cursor-pointer touch-manipulation rounded-card border border-gray-200 bg-white shadow-card transition-all hover:-translate-y-0.5 hover:border-l-[3px] hover:border-l-jira-blue hover:shadow-card-hover dark:border-slate-700 dark:bg-slate-800 dark:hover:border-l-jira-blue"
     >
       <div className="p-3">
         {/* Top row: key + priority */}
@@ -97,6 +97,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, assignee, onClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default TaskCard;

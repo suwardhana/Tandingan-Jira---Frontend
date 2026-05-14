@@ -5,7 +5,7 @@ const shimmer =
 
 export const SkeletonCard: React.FC = () => (
   <div
-    className={`rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-border dark:bg-dark-bg ${shimmer}`}
+    className={`rounded-card border border-gray-200 bg-white p-3 dark:border-dark-border dark:bg-dark-bg ${shimmer}`}
   >
     <div className="mb-2 flex items-start justify-between">
       <div className="h-3 w-16 rounded bg-gray-300 dark:bg-slate-600" />
@@ -26,7 +26,7 @@ export const SkeletonCard: React.FC = () => (
 );
 
 export const SkeletonColumn: React.FC<{ cardCount?: number }> = ({ cardCount = 3 }) => (
-  <div className="flex max-h-full w-80 flex-col rounded-xl border border-gray-200 bg-gray-100 dark:border-dark-border/50 dark:bg-dark-surface/50">
+  <div className="flex max-h-full w-[85vw] flex-none flex-col rounded-xl border border-gray-200 bg-gray-100 dark:border-dark-border/50 dark:bg-dark-surface/50 sm:w-72">
     <div className="flex items-center justify-between p-4">
       <div className="flex items-center gap-3">
         <div className={`h-4 w-24 rounded ${shimmer}`} />

@@ -2,490 +2,399 @@
 
 ## Overview
 
-This is a **React + TypeScript + Vite** project that implements a modern project management dashboard (Jira-like interface) called **TaskFlow**. The application features dark mode, drag-and-drop Kanban board, task management, team management, and reporting capabilities.
+React 19 + TypeScript + Vite project — a Jira-faithful project management dashboard (TaskFlow) with Kanban board, list view, reports, team management, and settings.
 
-**Key Technologies:**
+**Key technologies:**
+- React 19.2.6, TypeScript 6.0, Vite 8
+- **bun** package manager (v1.3.13+, lockfile: `bun.lock`)
+- Build-time Tailwind CSS 3 via PostCSS (NOT CDN)
+- @dnd-kit (drag-and-drop Kanban)
+- react-router-dom v7 (URL-based routing)
+- Recharts (data visualization)
+- ESLint v9 flat config + Prettier v3 (prettier-plugin-tailwindcss)
 
-- React 19.2.3 with TypeScript
-- Vite 6.2.0 (build tool)
-- Tailwind CSS (via CDN) for styling
-- Recharts for data visualization
-- No state management library (uses React hooks)
-
-## Essential Commands
+## Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server (port 3000)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+bun run dev           # Dev server on port 3000 (host: 0.0.0.0)
+bun run build         # Production build to dist/
+bun run preview       # Preview production build
+bun run lint          # ESLint (flat config)
+bun run lint:fix      # ESLint auto-fix
+bun run format        # Prettier format all files
+bun run format:check  # Prettier dry-run check
 ```
 
-## Environment Setup
-
-**Required Environment Variables:**
-
-- `VITE_API_BASE_URL` - Backend API endpoint (default: `http://localhost:3344/api`)
-- `GEMINI_API_KEY` - Required for AI Studio integration (mentioned in README)
-
-**Configuration Files:**
-
-- `.env` - Environment variables (currently sets API base URL)
-- `vite.config.ts` - Vite configuration with path aliases and env injection
-- `tsconfig.json` - TypeScript configuration
+All commands use `bunx --bun vite` under the hood. Do NOT use npm.
 
 ## Project Structure
 
 ```
-D:/vibecoding/Tandingan-Jira---Frontend/
-├── App.tsx                    # Main application component
-├── index.tsx                  # React entry point
-├── index.html                 # HTML template with Tailwind CDN
-├── api.ts                     # API layer with snake_case ↔ camelCase transformation
-├── types.ts                   # TypeScript type definitions
-├── constants.ts               # Mock data (users, sprints, tasks)
-├── package.json               # Dependencies and scripts
-├── vite.config.ts             # Vite configuration
-├── tsconfig.json              # TypeScript configuration
+├── App.tsx                       # Single state owner + router wrapper
+├── index.tsx                     # React entry point
+├── index.html                    # HTML template (importmaps for CDN react/recharts)
+├── index.css                     # Tailwind directives + global styles
+├── api.ts                        # API layer (snake_case ↔ camelCase)
+├── types.ts                      # TypeScript types/enums
+├── constants.ts                  # Mock data fallback
+├── tailwind.config.js            # Tailwind config (Jira tokens, plugins)
+├── postcss.config.js             # PostCSS: tailwindcss + autoprefixer
+├── vite.config.ts                # Vite: port 3000, @ alias, GEMINI_API_KEY injection
+├── tsconfig.json                 # TypeScript: ES2022, bundler resolution, @ alias
+├── eslint.config.js              # ESLint v9 flat config
+├── prettier.config.js            # Prettier + prettier-plugin-tailwindcss
+├── .env                          # VITE_API_BASE_URL (default: localhost:3344/api)
 └── components/
-    ├── organisms/             # Complex components (modals, sidebar, header)
-    ├── molecules/             # Medium components (TaskCard)
-    ├── atoms/                 # Simple components (Avatar, StatusBadge, PriorityIcon)
-    ├── pages/                 # View components (BoardView, ListView, etc.)
-    └── [duplicate files]      # Note: Some components exist in both root and subdirectories
+    ├── atoms/                    # Avatar, StatusBadge, PriorityIcon, Skeleton
+    ├── molecules/                # TaskCard
+    ├── organisms/                # Sidebar, Header, IssueModal, CreateIssueModal,
+    │                             #   AddMemberModal, ErrorBoundary, Toast
+    └── pages/                    # BoardView, ListView, ReportsView, TeamView, SettingsView
 ```
 
-## Code Organization & Patterns
+**No duplicate files exist** — the only component directories are `atoms/`, `molecules/`, `organisms/`, `pages/`.
 
-### Component Architecture
+## Architecture & Data Flow
 
-**Atomic Design Structure:**
+### Routing (react-router-dom v7)
 
-- **Atoms**: Simple, reusable UI components (Avatar, StatusBadge, PriorityIcon)
-- **Molecules**: Composed atoms (TaskCard)
-- **Organisms**: Complex components (Sidebar, Header, Modals)
-- **Pages**: Full view components (BoardView, ListView, TeamView, ReportsView, SettingsView)
+`App.tsx` wraps everything in `<BrowserRouter>`. Routes:
 
-**Note**: There are duplicate component files in both `components/` root and subdirectories. The codebase appears to use the `components/organisms/`, `components/molecules/`, and `components/atoms/` structure.
+| URL | Renders |
+|-----|---------|
+| `/` | Redirect to `/board` |
+| `/board`, `/list`, `/reports`, `/team`, `/settings` | Main views |
+| `/board/task/:taskKey` | Board + IssueModal overlay (board stays mounted) |
+| `/list/task/:taskKey` | List + IssueModal overlay |
+| `?create=true` | Opens CreateIssueModal on current view |
 
-### Naming Conventions
+**Critical:** Views are URL-derived, not state. `AppLayout` reads `useLocation().pathname` to determine `currentView`. Modals are driven by URL params — `taskKey` from path segments, `showCreate` from `?create=true` search param. Browser back button works correctly for closing modals.
 
-- **Components**: PascalCase (e.g., `TaskCard`, `BoardView`)
-- **Props**: PascalCase interface names (e.g., `TaskCardProps`, `BoardViewProps`)
-- **Types/Interfaces**: PascalCase (e.g., `User`, `Task`, `ViewMode`)
-- **Enum Values**: UPPER_SNAKE_CASE (e.g., `Priority.HIGH`, `Status.TODO`)
-- **Functions**: camelCase (e.g., `handleCreateTask`, `fetchUsers`)
+### State Management
 
-### Type System
+`App.tsx` is the **single state owner** — no Redux, Zustand, or Context for data. All data and mutation handlers live in `AppLayout` and are passed as props.
 
-**Key Types** (`types.ts`):
+State flow:
+1. `useEffect` on mount → parallel `api.fetchUsers/Tasks/Sprints()`
+2. On API failure → falls back to `constants.ts` mock data (`USERS`, `TASKS`, `SPRINTS`)
+3. `dataReady` flag controls skeleton vs real content rendering
+4. Mutations use **optimistic updates** — local state updated immediately, then API call follows. On failure, toast shows warning; no rollback.
+
+### Data Loading & Fallback
 
 ```typescript
-// Enums for fixed values
-enum Priority {
-  LOW = "Low",
-  MEDIUM = "Medium",
-  HIGH = "High",
-  CRITICAL = "Critical",
-}
-enum Status {
-  TODO = "To Do",
-  IN_PROGRESS = "In Progress",
-  REVIEW = "Review",
-  DONE = "Done",
-}
-enum IssueType {
-  TASK = "Task",
-  BUG = "Bug",
-}
-
-// Core interfaces
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  email: string;
-  role?: string;
-}
-interface Task {
-  id: string;
-  key: string; // e.g., PROJ-101
-  title: string;
-  status: Status;
-  priority: Priority;
-  type: IssueType;
-  // ... more fields
-}
-interface Sprint {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  goal: string;
-  status: "active" | "future" | "closed";
+// App.tsx pattern:
+try {
+  const [users, tasks, sprints] = await Promise.all([...])
+} catch {
+  console.warn("API unavailable — using mock data")
+  setUsers(USERS); setTasks(TASKS); setSprints(SPRINTS)
+} finally {
+  setDataReady(true)
 }
 ```
 
-### API Layer Pattern (`api.ts`)
+The app runs standalone without a backend via this fallback. All mock data is in `constants.ts`.
 
-**Snake Case ↔ Camel Case Transformation:**
+### Component Props Flow
 
-- All API responses are automatically converted from `snake_case` to `camelCase`
-- All API requests are automatically converted from `camelCase` to `snake_case`
-- Uses utility functions `fromApi()` and `toApi()` with recursive key transformation
-
-**API Methods:**
-
-```typescript
-// Users
-api.fetchUsers(): Promise<User[]>
-api.createUser(user: Partial<User>): Promise<User>
-
-// Sprints
-api.fetchSprints(): Promise<Sprint[]>
-api.createSprint(sprint: Partial<Sprint>): Promise<Sprint>
-
-// Tasks
-api.fetchTasks(): Promise<Task[]>
-api.createTask(task: Partial<Task>): Promise<Task>
-api.updateTask(id: string, updates: Partial<Task>): Promise<Task>
-api.deleteTask(id: string): Promise<void>
+```
+AppLayout (state + handlers)
+ ├── Sidebar     ← currentView, onViewChange, isDark, toggleTheme, currentUser
+ ├── Header      ← currentView, onCreateClick, sprints, currentSprintId, etc.
+ ├── {BoardView | ListView | ReportsView | TeamView | SettingsView}
+ │    ← tasks, users, onTaskClick, onCreateClick, etc.
+ ├── IssueModal          ← selectedTask (URL-derived), onUpdateTask, onAddComment, etc.
+ ├── CreateIssueModal    ← showCreate (URL-derived), onCreate, users, sprints
+ └── AddMemberModal      ← local state isAddMemberModalOpen, onAdd
 ```
 
-**Base URL Configuration:**
+### Drag & Drop (@dnd-kit)
 
-- Default: `http://localhost:3344/api`
-- Configurable via `VITE_API_BASE_URL` environment variable
-- Uses `import.meta.env` for Vite environment variables
+BoardView uses `@dnd-kit/core` + `@dnd-kit/sortable`:
 
-### State Management Pattern
+- `DndContext` wraps the board with `rectIntersection` collision detection
+- Each column is a `useDroppable` zone (keyed by `Status` enum)
+- Each card is wrapped in `useSortable` for vertical reorder within a column
+- `DragOverlay` renders a floating copy during drag
+- `PointerSensor` with 8px activation distance, `TouchSensor` with 250ms delay
+- `KeyboardSensor` for accessibility (included by default)
+- On drop across columns → `onTaskUpdate(taskId, { status, order })`
+- On drop within column → `onReorder(status, orderedIds)` via `arrayMove`
+- Pessimistic: status change fires immediately in state; order is recalculated
 
-**App.tsx** manages global state using React hooks:
+**Important:** `useSortable` requires item IDs as strings. If task IDs contain special characters, they may need sanitization.
 
-- **Data State**: `tasks`, `users`, `sprints` (fetched via API)
-- **UI State**: `currentView`, `isDark`, `selectedTask`, modal states
-- **Derived State**: `currentSprint`, `sprintTasks`, `currentUser`
+## Design Tokens & Styling
 
-**State Flow:**
+### Tailwind (build-time, NOT CDN)
 
-1. Initial load in `useEffect` fetches all data
-2. Updates use optimistic UI updates + API calls
-3. Errors are logged to console (no error boundaries visible)
+Tailwind is processed by PostCSS, not loaded from CDN. Config at `tailwind.config.js`:
 
-### Dark Mode Implementation
+**Jira design tokens:**
+- `jira-blue: #0052CC`, `jira-blue-hover: #0747A6`
+- `jira-sidebar: #0747A6`, `jira-sidebar-hover: #1C3D6E`, `jira-sidebar-active: #2A5295`
+- `jira-green: #36B37E`, `jira-red: #FF5630`, `jira-yellow: #FFAB00`
+- `jira-teal: #00B8D9`, `jira-purple: #6554C0`
 
-**Approach**: CSS class-based dark mode
+**Surface/text colors:**
+- `surface: #F4F5F7`, `surface-hover: #EBECF0`, `surface-raised: #FFFFFF`, `surface-dark: #1E293B`
+- `text-primary: #172B4D`, `text-secondary: #5E6C84`, `text-subtle: #8993A4`, `text-link: #0052CC`
 
-- Root element gets `.dark` class toggled via `document.documentElement.classList`
-- Tailwind's `dark:` prefix used throughout
-- Default theme: Dark mode (HTML has `class="dark"`)
-- Configured in `index.html` Tailwind config
+**Dark mode:** `dark-bg: #0f172a`, `dark-surface: #1e293b`, `dark-border: #334155`
 
-### Drag & Drop Pattern (BoardView)
+**Custom shadows:** `card`, `card-hover`, `card-dragging`, `modal`, `dropdown`
 
-**HTML5 Drag and Drop API:**
+**Custom border radius:** `card: 3px` (Jira's subtle rounded corners)
 
-```typescript
-// On drag start
-onDragStart={(e) => e.dataTransfer.setData('taskId', taskId)}
+**Plugins:** `@tailwindcss/forms`, `@tailwindcss/typography`, `@tailwindcss/aspect-ratio`, `@tailwindcss/line-clamp`
 
-// On drop
-onDrop={(e) => {
-  const taskId = e.dataTransfer.getData('taskId');
-  onTaskUpdate(taskId, newStatus);
-}}
-```
+### Dark Mode
 
-**Visual Feedback**:
+`darkMode: "class"` — `<html>` gets `.dark` class toggled. Default is dark (`<html class="dark">` in `index.html`). Theme toggle in `App.tsx` via `isDark` state.
 
-- `cursor-grabbing` on active drag
-- `hover:ring-2 hover:ring-blue-500/50` on cards
-- Drop zones highlight on hover
+### Icons
 
-### Modal Pattern
-
-**Consistent Modal Structure:**
-
-```typescript
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  // ... other props
-}
-
-if (!isOpen) return null;
-
-return (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-    <div className="relative bg-white dark:bg-dark-surface w-full max-w-lg rounded-xl shadow-2xl">
-      {/* Modal content */}
-    </div>
-  </div>
-);
-```
-
-## Styling & UI Patterns
-
-### Tailwind CSS (CDN)
-
-- **Configured in `index.html`** with custom theme
-- **Colors**: Custom dark mode colors (`dark:bg-dark-bg`, `dark:border-dark-border`)
-- **Typography**: Inter font family
-- **Icons**: Material Symbols Outlined (Google Fonts)
-
-### Common Class Patterns
-
-**Dark Mode:**
-
-```tsx
-className = "bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border";
-```
-
-**Interactive Elements:**
-
-```tsx
-className = "hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors";
-```
-
-**Buttons:**
-
-```tsx
-className = "px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold";
-```
-
-### Responsive Design
-
-- Mobile-first approach
-- Flexbox and Grid layouts
-- `overflow-x-auto` for horizontal scrolling (BoardView)
-- `flex-1` for flexible sizing
-
-## Data Flow
-
-### Initial Load Sequence
-
-1. **App.tsx** mounts → `useEffect` triggers
-2. **API calls** in parallel:
-   - `api.fetchUsers()`
-   - `api.fetchTasks()`
-   - `api.fetchSprints()`
-3. **State updates** with fetched data
-4. **First sprint** automatically selected as `currentSprintId`
-
-### Task Creation Flow
-
-1. User clicks "Create Issue" → Opens `CreateIssueModal`
-2. Form submission → `handleCreateTask` in App.tsx
-3. **Optimistic update**: Add to local state immediately
-4. **API call**: `api.createTask(taskPayload)`
-5. **Update state**: Add returned task to `tasks` array
-
-### Task Update Flow
-
-1. User updates task (drag-drop, modal edit)
-2. **Optimistic update**: Update local state immediately
-3. **API call**: `api.updateTask(taskId, updates)`
-4. **Error handling**: Logs error, no rollback visible
-
-## Mock Data (`constants.ts`)
-
-**Note**: This file contains **mock data** for development/testing. The application also uses real API calls via `api.ts`.
-
-**Mock Data Available:**
-
-- `USERS`: 4 sample users with avatars
-- `SPRINTS`: 2 sprints (1 active, 1 future)
-- `TASKS`: 8 tasks with various statuses, priorities, and types
-- `REPORT_DATA`: Chart data for ReportsView
-- `TICKET_DISTRIBUTION`: Pie chart data
-
-## Important Gotchas & Notes
-
-### 1. **Component Duplication**
-
-There are duplicate component files in both:
-
-- `components/BoardView.tsx`
-- `components/pages/BoardView.tsx`
-
-**Use the `components/pages/` and `components/organisms/` structure.**
-
-### 2. **No Testing Setup**
-
-- No test framework configured (Jest, Vitest, etc.)
-- No test files present
-- No test scripts in `package.json`
-
-### 3. **No Error Boundaries**
-
-- Errors are logged to console only
-- No global error handling
-- No user-facing error messages
-
-### 4. **No Loading States**
-
-- Loading is handled by checking if data exists
-- No spinners or skeleton loaders visible in code
-
-### 5. **Comment API Not Implemented**
-
-```typescript
-// In App.tsx
-const handleAddComment = (taskId: string, text: string) => {
-  console.warn("Comment API pending");
-};
-```
-
-### 6. **ID Generation Strategy**
-
-- Client generates IDs: `t${Date.now()}`, `u${Date.now()}`
-- Backend might overwrite (comment in code)
-- PHP migration defines ID as VARCHAR(128)
-
-### 7. **Tailwind CDN Usage**
-
-- Not using PostCSS/Build-time Tailwind
-- Configured in HTML `<script>` tag
-- All styling via CDN (no PurgeCSS)
-
-### 8. **Import Map in HTML**
-
+Google Fonts Material Symbols Outlined, loaded in `index.html`. Usage:
 ```html
-<script type="importmap">
-  {
-    "imports": {
-      "react/": "https://esm.sh/react@^19.2.3/",
-      "react": "https://esm.sh/react@^19.2.3",
-      "recharts": "https://esm.sh/recharts@^3.6.0"
-    }
-  }
-</script>
+<span class="material-symbols-outlined">settings</span>
+<span class="material-symbols-outlined fill-icon">home</span>  <!-- filled variant -->
 ```
 
-### 9. **Path Aliases**
+### Custom CSS (`index.css`)
 
-Configured in `vite.config.ts` and `tsconfig.json`:
+- `material-symbols-outlined` class: sets font variation settings, size
+- `fill-icon` class: sets `FILL 1` for filled icon style
+- Custom scrollbar styles (WebKit only)
+
+### View Transitions
+
+`<meta name="view-transition" content="same-origin" />` in `index.html` for crossfade on view switches. CSS animation duration set to 200ms with reduced-motion respect.
+
+## Key Types (`types.ts`)
 
 ```typescript
-// vite.config.ts
-resolve: {
-  alias: {
-    '@': path.resolve(__dirname, '.'),
-  }
+enum Priority { LOW = "Low", MEDIUM = "Medium", HIGH = "High", CRITICAL = "Critical" }
+enum Status { TODO = "To Do", IN_PROGRESS = "In Progress", REVIEW = "Review", DONE = "Done" }
+enum IssueType { TASK = "Task", BUG = "Bug" }
+
+interface User { id, name, avatar, email, role? }
+interface Comment { id, userId, text, createdAt }
+interface Subtask { id, taskId, title, completed, createdAt?, updatedAt? }
+interface Sprint { id, name, startDate, endDate, goal, status: "active" | "future" | "closed" }
+interface Task {
+  id, key, title, description, status, priority, type,
+  assigneeId?, reporterId, sprintId, dueDate?, createdAt, updatedAt,
+  order?, labels: string[], comments?: Comment[], subtasks?: Subtask[],
+  attachments?: { name, size, type }[]
 }
 
-// Usage: import { User } from '@/types';
+type ViewMode = "board" | "list" | "reports" | "team" | "settings"
 ```
 
-### 10. **API Base URL**
+Enum values are string literals, not numeric — use them directly in comparisons and switch statements.
 
-- Default: `http://localhost:3344/api`
-- Must be set in `.env` or via environment
-- Backend expected to be running on port 3344
+## API Layer (`api.ts`)
 
-## Views & Features
+All endpoints go through a single `api` object with automatic snake_case ↔ camelCase conversion:
 
-### BoardView
+```typescript
+import { api } from "./api"
+const tasks = await api.fetchTasks()
+const created = await api.createTask({ title: "Foo", status: Status.TODO })
+```
 
-- Kanban board with drag-and-drop
-- Columns: To Do, In Progress, Review, Done
-- Sprint header with status badge
-- Task cards with priority, labels, assignee
+**Available methods:**
+- `fetchUsers()`, `createUser(user)`
+- `fetchSprints()`, `createSprint(sprint)`
+- `fetchTasks()`, `createTask(task)`, `updateTask(id, updates)`, `deleteTask(id)`
+- `fetchSubtasks(taskId)`, `createSubtask(taskId, subtask)`, `updateSubtask(id, updates)`, `deleteSubtask(id)`
+- `fetchComments(taskId)`, `createComment(taskId, comment)`, `updateComment(id, updates)`, `deleteComment(id)`
 
-### ListView
+**Base URL:** `VITE_API_BASE_URL` env var (default `http://localhost:3344/api`)
 
-- Table/list view of tasks
-- Same data as BoardView, different presentation
+**Key transformation:** `fromApi()` converts responses snake_case→camelCase, `toApi()` converts requests camelCase→snake_case. Recursive — handles nested objects and arrays.
 
-### ReportsView
+## Component Patterns
 
-- Data visualization using Recharts
-- Charts for sprint progress and ticket distribution
+### Modals
 
-### TeamView
+All modals follow the same pattern:
+```tsx
+{/* Backdrop */}
+<div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4">
+  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+  {/* Content container */}
+  <div className="relative flex h-full max-h-full w-full ... sm:max-w-4xl sm:rounded-xl">
+    {/* Header with close button */}
+    {/* Scrollable content */}
+  </div>
+</div>
+```
 
-- Team member management
-- Add member functionality
+- Full-screen on mobile, centered sheet on desktop (sm: breakpoint)
+- `animate-[fadeIn_0.2s_ease-out]` for entry animation
+- Modal toggled via `if (!isOpen) return null` (unmounts when closed)
 
-### SettingsView
+### Skeleton Loading
 
-- Placeholder for settings (empty in current implementation)
+`dataReady` drives skeleton vs content. Skeleton variants in `components/atoms/Skeleton.tsx`:
+- `SkeletonBoard` — sprint header + 4 columns with cards
+- `SkeletonTable` — header + N rows
+- `SkeletonReports` — 3 metric cards + 2 chart areas
+- `SkeletonCard`, `SkeletonColumn`, `SkeletonText`, `SkeletonAvatar`, `SkeletonMetric`
+
+All skeletons match final content dimensions (no layout shift). Uses a custom `shimmer` gradient animation.
+
+### Toast Notifications
+
+`ToastProvider` wraps the app, `useToast()` hook provides `toast(message, type)`:
+```tsx
+const { toast } = useToast()
+toast("Issue created", "success")
+toast("Saved locally", "warning")
+```
+
+Types: `"success" | "warning" | "error" | "info"`. Auto-dismiss after 4s. Stacked bottom-right.
+
+### ErrorBoundary
+
+Class-based React error boundary wrapping each page view in `App.tsx`:
+```tsx
+<ErrorBoundary key={viewKey}>
+  {renderContent()}
+</ErrorBoundary>
+```
+
+Shows error state with "Reload page" and "Try again" buttons. `key={viewKey}` resets boundary on view change.
+
+### Memoization Pattern
+
+`React.memo` is used on: TaskCard, SortableCard, DroppableColumn, BoardView, ListView, ReportsView, TeamView, Sidebar, Header, IssueModal, CreateIssueModal, Avatar, StatusBadge, PriorityIcon.
+
+`useCallback` wraps all mutation handlers in AppLayout.
+
+`useMemo` wraps `selectedTask`, `sprintTasks`, ticket distribution data.
+
+## Styling Conventions
+
+- **Dark mode:** Every UI surface needs both light and dark variants:
+  ```tsx
+  className="bg-white dark:bg-dark-bg text-slate-900 dark:text-white border-gray-200 dark:border-dark-border"
+  ```
+- **Interactive elements:** Use `transition-colors` for hover states, `active:scale-95` for buttons
+- **Typography:** `text-xs font-bold uppercase tracking-wider` for labels, `text-sm font-semibold` for clickable items
+- **Spacing:** px-3 (mobile), sm:px-6 (desktop) pattern for page padding
+- **Scrolling:** `custom-scrollbar` class on scrollable containers + WebKit scrollbar styles in index.css
+- **Touch:** `touch-manipulation` on draggable cards to prevent scroll interference
+
+## Responsive Breakpoints
+
+| Width | Sidebar | Board | Modals | Header |
+|-------|---------|-------|--------|--------|
+| <768px (mobile) | Hamburger overlay | Stacked columns, snap scroll | Full-screen | Compact (hamburger + create) |
+| 768-1023px (tablet) | Visible, icon-only (56px) | Horizontal scroll | Centered sheet | Full |
+| ≥1024px (desktop) | Full sidebar (224px) | Horizontal scroll | Centered sheet | Full |
+
+Board columns are `w-[85vw] sm:w-72` — full-width on mobile, fixed on desktop. Horizontal scroll snap (`snap-x snap-center`) for mobile column navigation.
+
+## Environment Variables
+
+- `VITE_API_BASE_URL` — backend API URL (default: `http://localhost:3344/api`)
+- `GEMINI_API_KEY` — injected into `process.env.GEMINI_API_KEY` via Vite `define` (not used by current frontend code)
+
+## Import Maps (⚠️ Unconventional)
+
+`index.html` uses `<script type="importmap">` to resolve `react`, `react-dom`, and `recharts` from `esm.sh` CDN — even though they're installed in `node_modules` via bun. This means:
+
+- **Browser resolves these from CDN at runtime**, bypassing node_modules entirely
+- The CDN versions must match: `react@^19.2.3`, `recharts@^3.6.0`
+- Other packages (`@dnd-kit/*`) are resolved normally through node_modules/Vite
+- When adding new React ecosystem deps, check if they need importmap entries
+
+## Naming Conventions
+
+- **Components:** PascalCase (`TaskCard`, `BoardView`)
+- **Props interfaces:** `{ComponentName}Props` (e.g., `TaskCardProps`)
+- **Types/Enums:** PascalCase (`User`, `Status`)
+- **Functions/handlers:** camelCase, prefixed with `handle` in App.tsx (`handleCreateTask`, `handleUpdateTask`)
+- **Callback props:** `on` + action (`onTaskClick`, `onViewChange`)
+- **Files match default export name** exactly
+
+## Gotchas
+
+### 1. No Tests
+No test framework configured. No test files. No test scripts. Zero automated testing.
+
+### 2. Optimistic Updates Without Rollback
+Mutations update local state immediately, then call the API. If the API fails, the local state is NOT rolled back — only a toast warning appears. This means UI can get out of sync with reality if using a real backend.
+
+### 3. Client-Side ID Generation
+New tasks get `id: 't${Date.now()}'`, users get `id: 'u${Date.now()}'`. The backend may overwrite these. After `api.createTask()`, the returned task replaces the optimistic one by matching on this client-generated ID.
+
+### 4. `useSortable` IDs Must Be Strings
+If task IDs ever become numeric, they'll need `String()` conversion before being used with `SortableContext`.
+
+### 5. Keyboard DnD Comes Free With @dnd-kit
+Don't disable it. `KeyboardSensor` is included in `useSensors` array.
+
+### 6. ESLint Rule: `any` is Allowed
+`@typescript-eslint/no-explicit-any` is set to `"off"`. The API transform functions use `any` liberally.
+
+### 7. ESLint Rule: `_` Prefix for Unused Vars
+`@typescript-eslint/no-unused-vars` warns but ignores args starting with `_`.
+
+### 8. `material-symbols-outlined` is Global CSS
+The class is defined in `index.css` with specific font variation settings. All icon usage relies on this class being available. Do NOT remove it.
+
+### 9. CDN Fonts
+Inter and Material Symbols fonts load from Google Fonts CDN. No offline fallback — icons will be missing if offline.
+
+### 10. Dark Mode Default
+`<html class="dark">` is hardcoded in `index.html`. App defaults to dark theme on first load.
+
+### 11. Vite Dev Server Binds to 0.0.0.0
+Exposed on all network interfaces. Accessible from other devices on the local network.
+
+### 12. `view-transition` Meta Tag
+Enables crossfade between route changes in Chromium browsers. Gracefully degrades in Firefox/Safari.
+
+### 13. `.prettierignore` Excludes `dist`, `node_modules`, `bun.lock`, `goals`
+The `goals/` directory (containing implementation plan docs) is excluded from formatting.
+
+### 14. Comments & Subtasks Have Complete API Integration
+Both features are fully wired: create, read, update, delete endpoints exist in `api.ts` and handlers exist in `App.tsx`. The old comment stub that logged `"Comment API pending"` has been replaced.
+
+### 15. Settings View Has Content Now
+SettingsView is no longer a placeholder — it has General settings (project name, key, description) and Notifications toggles.
+
+### 16. Prettier Config
+- `printWidth: 100`, `tabWidth: 2`, `trailingComma: "all"`, `singleQuote: false`
+- `prettier-plugin-tailwindcss` is enabled (auto-sorts Tailwind classes)
+- Run `bun run format` before committing
 
 ## Common Development Tasks
 
-### Adding a New Component
-
-1. Create in appropriate directory (`atoms/`, `molecules/`, `organisms/`, `pages/`)
-2. Define Props interface
-3. Use PascalCase naming
-4. Follow existing styling patterns
-
 ### Adding a New API Endpoint
+1. Add method to `api.ts` using `fromApi()`/`toApi()` for transformation
+2. Add any new types to `types.ts`
+3. Add handler in `App.tsx` (follow optimistic update pattern)
+4. Thread handler through to the component that needs it
 
-1. Add method to `api.ts`
-2. Use `fromApi()` for response transformation
-3. Use `toApi()` for request transformation
-4. Update `types.ts` if needed
+### Adding a New View
+1. Create component in `components/pages/`
+2. Add to `ViewMode` type union in `types.ts`
+3. Add navigation item in `Sidebar.tsx` (`navItems` array)
+4. Add route case in `AppLayout.renderContent()`
+5. Add skeleton variant if view has async data
 
-### Modifying Dark Mode Colors
+### Modifying Drag & Drop Behavior
+- Sensor configuration lives in `BoardView.tsx` (`useSensors` call)
+- Column drop handling in `handleDragEnd` (cross-column: `onTaskUpdate`, same-column: `onReorder`)
+- Drag overlay styling in the `<DragOverlay>` section
+- Touch delay (250ms) prevents accidental drags on scroll — adjust `TouchSensor` config if needed
 
-1. Update `index.html` Tailwind config
-2. Update CSS variables if used
-3. Ensure both light and dark variants exist
-
-### Adding Environment Variables
-
-1. Add to `.env` file
-2. Access via `import.meta.env.VITE_...`
-3. Update `vite.config.ts` if needed for `define`
-
-## Troubleshooting
-
-### API Connection Issues
-
-- Check if backend is running on port 3344
-- Verify `VITE_API_BASE_URL` in `.env`
-- Check browser console for fetch errors
-
-### Styling Issues
-
-- Tailwind CDN must load properly
-- Check if `.dark` class is on `<html>` element
-- Verify custom colors in Tailwind config
-
-### Type Errors
-
-- Run `npm install` to ensure types are available
-- Check `tsconfig.json` paths
-- Verify imports use correct paths
-
-## Future Considerations
-
-**Missing Features:**
-
-- Authentication/Authorization
-- Error boundaries
-- Loading states
-- Unit/Integration tests
-- E2E tests
-- CI/CD configuration
-- Proper state management (if scale increases)
-- Comment functionality
-- File attachments
-- Real-time updates (WebSockets)
-
-**Technical Debt:**
-
-- Component file duplication
-- No error handling beyond console.log
-- Mock data mixed with real API
-- No validation on forms
-- No accessibility testing
+### Working With Colors
+- Always use semantic tokens from `tailwind.config.js` (e.g., `bg-jira-blue`, `text-text-primary`)
+- Always provide dark variants (`dark:bg-dark-surface`, `dark:text-white`)
+- Custom theme colors don't use Tailwind's opacity modifier syntax

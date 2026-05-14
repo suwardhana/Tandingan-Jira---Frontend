@@ -12,7 +12,20 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
       rel="stylesheet"
     />
+    <meta name="view-transition" content="same-origin" />
     <link rel="stylesheet" href="/index.css" />
+    <style>
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation-duration: 200ms;
+      }
+      @media (prefers-reduced-motion) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation: none;
+        }
+      }
+    </style>
     <script type="importmap">
       {
         "imports": {

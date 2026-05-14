@@ -30,24 +30,22 @@ const config: Record<Priority, { icon: string; color: string; bg: string }> = {
   },
 };
 
-const PriorityIcon: React.FC<PriorityIconProps> = ({
-  priority,
-  showLabel = false,
-  size = "md",
-}) => {
-  const { icon, color, bg } = config[priority] || config[Priority.MEDIUM];
-  const sizeClass = size === "sm" ? "p-0.5 text-[12px]" : "p-1 text-[16px]";
+const PriorityIcon: React.FC<PriorityIconProps> = React.memo(
+  ({ priority, showLabel = false, size = "md" }) => {
+    const { icon, color, bg } = config[priority] || config[Priority.MEDIUM];
+    const sizeClass = size === "sm" ? "p-0.5 text-[12px]" : "p-1 text-[16px]";
 
-  return (
-    <div className="flex items-center gap-1.5" title={`${priority} Priority`}>
-      <span className={`material-symbols-outlined ${sizeClass} rounded font-bold ${color} ${bg}`}>
-        {icon}
-      </span>
-      {showLabel && (
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{priority}</span>
-      )}
-    </div>
-  );
-};
+    return (
+      <div className="flex items-center gap-1.5" title={`${priority} Priority`}>
+        <span className={`material-symbols-outlined ${sizeClass} rounded font-bold ${color} ${bg}`}>
+          {icon}
+        </span>
+        {showLabel && (
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{priority}</span>
+        )}
+      </div>
+    );
+  },
+);
 
 export default PriorityIcon;

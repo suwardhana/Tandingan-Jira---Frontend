@@ -7,7 +7,7 @@ interface TeamViewProps {
   onAddMemberClick: () => void;
 }
 
-const TeamView: React.FC<TeamViewProps> = ({ users, onAddMemberClick }) => {
+const TeamView: React.FC<TeamViewProps> = React.memo(({ users, onAddMemberClick }) => {
   return (
     <div className="custom-scrollbar h-full overflow-y-auto px-3 pb-6 sm:px-6">
       <div className="mb-6 flex items-center justify-between">
@@ -48,6 +48,6 @@ const TeamView: React.FC<TeamViewProps> = ({ users, onAddMemberClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default TeamView;

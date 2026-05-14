@@ -41,7 +41,7 @@ interface SortableCardProps {
   onClick: (task: Task) => void;
 }
 
-const SortableCard: React.FC<SortableCardProps> = ({ task, assignee, onClick }) => {
+const SortableCard: React.FC<SortableCardProps> = React.memo(({ task, assignee, onClick }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { task, status: task.status },
@@ -64,7 +64,7 @@ const SortableCard: React.FC<SortableCardProps> = ({ task, assignee, onClick }) 
       <TaskCard task={task} assignee={assignee} onClick={onClick} />
     </div>
   );
-};
+});
 
 // ── Droppable column wrapper ──────────────────────────────────────────────
 
@@ -219,7 +219,9 @@ const BoardView: React.FC<BoardViewProps> = ({
       <div className="flex shrink-0 flex-col justify-between gap-3 px-3 pb-3 sm:px-6 sm:pb-4 md:flex-row md:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h2 className="text-lg font-bold text-text-primary dark:text-white sm:text-xl">{sprint.name}</h2>
+            <h2 className="text-lg font-bold text-text-primary dark:text-white sm:text-xl">
+              {sprint.name}
+            </h2>
             <span
               className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
                 sprint.status === "active"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -89,7 +89,10 @@ const AppLayout: React.FC = () => {
 
   // ── Derived data ────────────────────────────────────────────────────────
   const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
-  const sprintTasks = tasks.filter((t) => t.sprintId === currentSprintId);
+  const sprintTasks = useMemo(
+    () => tasks.filter((t) => t.sprintId === currentSprintId),
+    [tasks, currentSprintId],
+  );
   const currentUser = users[0] || {
     id: "temp",
     name: "Loading...",
@@ -110,19 +113,22 @@ const AppLayout: React.FC = () => {
   const toggleTheme = () => setIsDark(!isDark);
 
   // ── URL-based navigation ────────────────────────────────────────────────
-  const handleViewChange = (view: ViewMode) => navigate(`/${view}`);
-  const handleTaskClick = (task: Task) => navigate(`/${currentView}/task/${task.key}`);
-  const handleCloseModal = () => navigate(-1);
-  const openCreateModal = () => {
+  const handleViewChange = useCallback((view: ViewMode) => navigate(`/${view}`), [navigate]);
+  const handleTaskClick = useCallback(
+    (task: Task) => navigate(`/${currentView}/task/${task.key}`),
+    [navigate, currentView],
+  );
+  const handleCloseModal = useCallback(() => navigate(-1), [navigate]);
+  const openCreateModal = useCallback(() => {
     const params = new URLSearchParams(searchParams);
     params.set("create", "true");
     setSearchParams(params);
-  };
-  const closeCreateModal = () => {
+  }, [searchParams, setSearchParams]);
+  const closeCreateModal = useCallback(() => {
     const params = new URLSearchParams(searchParams);
     params.delete("create");
     setSearchParams(params, { replace: true });
-  };
+  }, [searchParams, setSearchParams]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   const getCurrentDateFormatted = () =>
@@ -130,39 +136,44 @@ const AppLayout: React.FC = () => {
 
   // ── Mutation handlers (unchanged logic, added toast feedback) ────────────
 
-  const handleCreateTask = async (newTask: Partial<Task>) => {
-    const taskPayload: Task = {
-      id: `t${Date.now()}`,
-      key: `PROJ-${100 + tasks.length + 1}`,
-      title: newTask.title || "New Task",
-      description: newTask.description || "",
-      status: newTask.status || Status.TODO,
-      priority: newTask.priority as any,
-      type: newTask.type as any,
-      assigneeId: newTask.assigneeId,
-      reporterId: newTask.reporterId || currentUser.id,
-      sprintId: newTask.sprintId || currentSprintId,
-      labels: newTask.labels || [],
-      dueDate: newTask.dueDate,
-      comments: [],
-      order: tasks.filter((t) => t.status === (newTask.status || Status.TODO)).length + 1,
-      createdAt: getCurrentDateFormatted(),
-      updatedAt: getCurrentDateFormatted(),
-    };
+  const handleCreateTask = useCallback(
+    async (newTask: Partial<Task>) => {
+      let taskPayload: Task;
+      setTasks((prev) => {
+        taskPayload = {
+          id: `t${Date.now()}`,
+          key: `PROJ-${100 + prev.length + 1}`,
+          title: newTask.title || "New Task",
+          description: newTask.description || "",
+          status: newTask.status || Status.TODO,
+          priority: newTask.priority as any,
+          type: newTask.type as any,
+          assigneeId: newTask.assigneeId,
+          reporterId: newTask.reporterId || currentUser.id,
+          sprintId: newTask.sprintId || currentSprintId,
+          labels: newTask.labels || [],
+          dueDate: newTask.dueDate,
+          comments: [],
+          order: prev.filter((t) => t.status === (newTask.status || Status.TODO)).length + 1,
+          createdAt: getCurrentDateFormatted(),
+          updatedAt: getCurrentDateFormatted(),
+        };
+        return [...prev, taskPayload];
+      });
+      closeCreateModal();
 
-    setTasks((prev) => [...prev, taskPayload]);
-    closeCreateModal();
+      try {
+        const createdTask = await api.createTask(taskPayload!);
+        setTasks((prev) => prev.map((t) => (t.id === taskPayload!.id ? createdTask : t)));
+        toast("Issue created successfully", "success");
+      } catch {
+        toast("Issue saved locally — backend unavailable", "warning");
+      }
+    },
+    [closeCreateModal, toast, currentSprintId, currentUser.id],
+  );
 
-    try {
-      const createdTask = await api.createTask(taskPayload);
-      setTasks((prev) => prev.map((t) => (t.id === taskPayload.id ? createdTask : t)));
-      toast("Issue created successfully", "success");
-    } catch {
-      toast("Issue saved locally — backend unavailable", "warning");
-    }
-  };
-
-  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+  const handleUpdateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     setTasks((prev) => {
       // If status changed, auto-assign order to end of target column
       if (updates.status) {
@@ -180,9 +191,9 @@ const AppLayout: React.FC = () => {
     } catch {
       console.warn("API unavailable — update applied locally only");
     }
-  };
+  }, []);
 
-  const handleReorder = (status: Status, orderedTaskIds: string[]) => {
+  const handleReorder = useCallback((status: Status, orderedTaskIds: string[]) => {
     setTasks((prev) =>
       prev.map((t) => {
         const idx = orderedTaskIds.indexOf(t.id);
@@ -192,67 +203,82 @@ const AppLayout: React.FC = () => {
         return t;
       }),
     );
-  };
+  }, []);
 
-  const handleAddComment = async (taskId: string, text: string) => {
-    try {
-      const createdComment = await api.createComment(taskId, { text, userId: currentUser.id });
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, comments: [...(t.comments || []), createdComment] } : t,
-        ),
-      );
-      toast("Comment added", "success");
-    } catch {
-      toast("Comment saved locally", "warning");
-    }
-  };
+  const handleAddComment = useCallback(
+    async (taskId: string, text: string) => {
+      try {
+        const createdComment = await api.createComment(taskId, { text, userId: currentUser.id });
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, comments: [...(t.comments || []), createdComment] } : t,
+          ),
+        );
+        toast("Comment added", "success");
+      } catch {
+        toast("Comment saved locally", "warning");
+      }
+    },
+    [toast, currentUser.id],
+  );
 
-  const handleAddMember = async (user: Partial<User>) => {
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      name: user.name || "New Member",
-      email: user.email || "",
-      avatar: user.avatar || "",
-      role: user.role || "Member",
-    };
-    setUsers((prev) => [...prev, newUser]);
-    try {
-      const createdUser = await api.createUser(newUser);
-      setUsers((prev) => prev.map((u) => (u.id === newUser.id ? createdUser : u)));
-      toast("Member added", "success");
-    } catch {
-      toast("Member saved locally", "warning");
-    }
-  };
+  const handleAddMember = useCallback(
+    async (user: Partial<User>) => {
+      const newUser: User = {
+        id: `u${Date.now()}`,
+        name: user.name || "New Member",
+        email: user.email || "",
+        avatar: user.avatar || "",
+        role: user.role || "Member",
+      };
+      setUsers((prev) => [...prev, newUser]);
+      try {
+        const createdUser = await api.createUser(newUser);
+        setUsers((prev) => prev.map((u) => (u.id === newUser.id ? createdUser : u)));
+        toast("Member added", "success");
+      } catch {
+        toast("Member saved locally", "warning");
+      }
+    },
+    [toast],
+  );
 
-  const handleAddSubtask = async (taskId: string, title: string) => {
-    try {
-      const createdSubtask = await api.createSubtask(taskId, { title });
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] } : t,
-        ),
-      );
-      toast("Subtask added", "success");
-    } catch {
-      toast("Subtask saved locally", "warning");
-    }
-  };
+  const handleAddSubtask = useCallback(
+    async (taskId: string, title: string) => {
+      try {
+        const createdSubtask = await api.createSubtask(taskId, { title });
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] } : t,
+          ),
+        );
+        toast("Subtask added", "success");
+      } catch {
+        toast("Subtask saved locally", "warning");
+      }
+    },
+    [toast],
+  );
 
-  const handleDeleteSubtask = async (subtaskId: string) => {
-    try {
-      await api.deleteSubtask(subtaskId);
-      setTasks((prev) =>
-        prev.map((t) => ({ ...t, subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId) })),
-      );
-      toast("Subtask deleted", "success");
-    } catch {
-      toast("Subtask deletion saved locally", "warning");
-    }
-  };
+  const handleDeleteSubtask = useCallback(
+    async (subtaskId: string) => {
+      try {
+        await api.deleteSubtask(subtaskId);
+        setTasks((prev) =>
+          prev.map((t) => ({
+            ...t,
+            subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
+          })),
+        );
+        toast("Subtask deleted", "success");
+      } catch {
+        toast("Subtask deletion saved locally", "warning");
+      }
+    },
+    [toast],
+  );
 
-  const handleToggleSubtask = async (subtaskId: string, completed: boolean) => {
+  const handleToggleSubtask = useCallback(async (subtaskId: string, completed: boolean) => {
     try {
       await api.updateSubtask(subtaskId, { completed });
       setTasks((prev) =>
@@ -264,7 +290,7 @@ const AppLayout: React.FC = () => {
     } catch {
       console.warn("API unavailable — subtask toggle local only");
     }
-  };
+  }, []);
 
   // ── View rendering ──────────────────────────────────────────────────────
   const renderContent = () => {
