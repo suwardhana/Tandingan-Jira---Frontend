@@ -317,7 +317,6 @@ const AppLayout: React.FC = () => {
             onTaskClick={handleTaskClick}
             onTaskUpdate={handleUpdateTask}
             onReorder={handleReorder}
-            onCreateClick={openCreateModal}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-slate-500">

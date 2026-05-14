@@ -30,7 +30,6 @@ interface BoardViewProps {
   onTaskClick: (task: Task) => void;
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onReorder: (status: Status, orderedTaskIds: string[]) => void;
-  onCreateClick: () => void;
 }
 
 // ── Sortable card wrapper ─────────────────────────────────────────────────
@@ -73,7 +72,6 @@ interface DroppableColumnProps {
   children: React.ReactNode;
   taskCount: number;
   isEmpty: boolean;
-  onCreateClick: () => void;
 }
 
 const DroppableColumn: React.FC<DroppableColumnProps> = ({
@@ -81,7 +79,6 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   children,
   taskCount,
   isEmpty,
-  onCreateClick,
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id: status, data: { status } });
 
@@ -94,40 +91,28 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
           : "bg-gray-100 dark:bg-slate-800/60"
       }`}
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-lg bg-inherit px-3 py-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-primary dark:text-slate-200">
-            {status}
-          </h3>
-          <span className="min-w-[20px] rounded-full bg-gray-200 px-1.5 py-0.5 text-center text-xs font-bold text-text-secondary dark:bg-slate-700 dark:text-slate-400">
-            {taskCount}
-          </span>
-        </div>
-        <button
-          onClick={onCreateClick}
-          className="rounded p-1 text-slate-400 transition-colors hover:bg-gray-200 hover:text-text-primary dark:hover:bg-slate-700 dark:hover:text-slate-200"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-        </button>
+      <div className="sticky top-0 z-10 flex items-center gap-2 rounded-t-lg bg-inherit px-3 py-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-text-primary dark:text-slate-200">
+          {status}
+        </h3>
+        <span className="min-w-[20px] rounded-full bg-gray-200 px-1.5 py-0.5 text-center text-xs font-bold text-text-secondary dark:bg-slate-700 dark:text-slate-400">
+          {taskCount}
+        </span>
       </div>
 
       <div className="custom-scrollbar flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
         {children}
         {/* Empty column drop target */}
         {isEmpty && (
-          <div className="mx-1 mb-1 flex min-h-[80px] flex-1 items-center justify-center rounded-md border-2 border-dashed border-gray-300 transition-colors dark:border-slate-600">
+          <div className="mb-1 flex min-h-[80px] flex-1 items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-4 text-center transition-colors dark:border-slate-600">
             <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-              Drop issues here
+              {status === Status.TODO && "Plan what's coming up — drop a task to get started"}
+              {status === Status.IN_PROGRESS && "Got something to tackle? Drag it here and dive in"}
+              {status === Status.REVIEW && "Ship with confidence — give it a final look first"}
+              {status === Status.DONE && "The sweet spot. Ready to wrap something up?"}
             </span>
           </div>
         )}
-        <button
-          onClick={onCreateClick}
-          className="flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium text-slate-400 transition-colors hover:bg-gray-200 dark:text-slate-500 dark:hover:bg-slate-700"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-          <span>Create issue</span>
-        </button>
       </div>
     </div>
   );
@@ -142,7 +127,6 @@ const BoardView: React.FC<BoardViewProps> = ({
   onTaskClick,
   onTaskUpdate,
   onReorder,
-  onCreateClick,
 }) => {
   const columns = Object.values(Status);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -279,7 +263,6 @@ const BoardView: React.FC<BoardViewProps> = ({
                   status={status}
                   taskCount={columnTasks.length}
                   isEmpty={columnTasks.length === 0}
-                  onCreateClick={onCreateClick}
                 >
                   <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
                     {columnTasks.map((task) => (
