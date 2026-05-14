@@ -7,3 +7,34 @@
 {"timestamp":"2026-05-14T11:45:00Z","phase":"1","check":"Root redirect — / → /board","status":"pass","artifact":"HTTP 200 after redirect"}
 {"timestamp":"2026-05-14T11:45:30Z","phase":"1","check":"Bundle size under 200KB gzipped","status":"pass","artifact":"188KB gzipped (192,637 bytes)"}
 {"timestamp":"2026-05-14T11:45:30Z","phase":"1","check":"Phase 1 complete — routing, error boundaries, skeletons, toasts","status":"pass","artifact":"All 4 infrastructure components built and wired; 5 routes working"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Tailwind CDN → build-time migration","status":"pass","artifact":"Installed tailwindcss@3 + postcss + autoprefixer + @tailwindcss/forms + @tailwindcss/typography + @tailwindcss/aspect-ratio + @tailwindcss/line-clamp"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Jira design tokens configured","status":"pass","artifact":"tailwind.config.js with jira-blue, jira-sidebar, jira-green, jira-red, jira-yellow, surface colors, Jira shadow scale"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Bundle size after Tailwind migration","status":"pass","artifact":"50KB CSS (9KB gzipped) + 672KB JS (195KB gzipped) = 204KB total gzipped"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"TaskCard Jira-faithful restyle","status":"pass","artifact":"Type icon, key badge, priority icon, label chips, subtask progress bar, due date, avatar, hover left-border accent"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Sidebar Jira blue navigation","status":"pass","artifact":"bg-jira-sidebar (#0747A6), white text, active highlight, theme toggle, user avatar bottom"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Header Jira breadcrumb style","status":"pass","artifact":"Breadcrumb nav (Projects / TaskFlow / Board), sprint dropdown, search bar, jira-blue Create button"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Board columns Jira style","status":"pass","artifact":"Rounded containers, status-headers with counts, tighter spacing"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"PriorityIcon + StatusBadge Jira updates","status":"pass","artifact":"Jira-matching priority icons (CRITICAL=priority_high red, HIGH=arrow_upward orange, MEDIUM=remove blue, LOW=arrow_downward green); Status badges with colored dots"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"All modals use jira-blue tokens","status":"pass","artifact":"IssueModal, CreateIssueModal, AddMemberModal, ErrorBoundary all use bg-jira-blue/hover:bg-jira-blue-hover"}
+{"timestamp":"2026-05-14T11:50:00Z","phase":"2","check":"Avatar Jira style","status":"pass","artifact":"Circular with initials fallback, Jira-blue background for placeholder"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"Install @dnd-kit/core + @dnd-kit/utilities","status":"pass","artifact":"@dnd-kit/core@6.3.1, @dnd-kit/utilities@3.2.2, ~14KB gzipped added"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"DndContext with sensors (pointer, touch, keyboard)","status":"pass","artifact":"PointerSensor (8px activation), TouchSensor (250ms delay), KeyboardSensor configured in BoardView"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"Draggable cards via useDraggable","status":"pass","artifact":"DraggableCard wrapper with transform, opacity feedback, z-index lift"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"Droppable columns via useDroppable","status":"pass","artifact":"DroppableColumn with isOver blue ring highlight, column dim on drag"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"DragOverlay floating card","status":"pass","artifact":"Rotated clone with drop shadow, 200ms ease-out drop animation"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"TaskCard removed HTML drag attributes","status":"pass","artifact":"Removed draggable attribute and onDragStart from TaskCard; @dnd-kit handles all DnD"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"bun run build","status":"pass","artifact":"715KB JS (209KB gzipped) + 51KB CSS (9KB gzipped) = 218KB total, 0 TypeScript errors"}
+{"timestamp":"2026-05-14T12:14:00Z","phase":"3","check":"Dev server running","status":"pass","artifact":"HTTP 200 on :3000/board, 269ms startup"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"Added order field to Task type","status":"pass","artifact":"types.ts: order?: number added to Task interface"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"Updated mock data with order values","status":"pass","artifact":"All 8 tasks in constants.ts have order: TODO (1-3), IN_PROGRESS (1-2), REVIEW (1), DONE (1-2)"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"BoardView sorts by order per column","status":"pass","artifact":"getTasksByStatus sorts by (a.order ?? 0) - (b.order ?? 0)"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"New tasks get next order in column","status":"pass","artifact":"handleCreateTask assigns order = tasks.filter(sameStatus).length + 1"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"Status change reassigns order to end of target","status":"pass","artifact":"handleUpdateTask auto-assigns maxOrder + 1 when status changes"}
+{"timestamp":"2026-05-14T12:18:00Z","phase":"3","check":"bun run build","status":"pass","artifact":"0 TypeScript errors, 665ms build"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"Installed @dnd-kit/sortable","status":"pass","artifact":"@dnd-kit/sortable@10.0.0, ~5KB gzipped added"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"SortableContext per column with verticalListSortingStrategy","status":"pass","artifact":"Each column wraps cards in SortableContext with task IDs; SortableCard uses useSortable with transform/transition"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"Within-column reorder via arrayMove","status":"pass","artifact":"handleDragEnd: same status → arrayMove → onReorder(status, orderedIds) → sequential order assignment"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"Between-column move with position insert","status":"pass","artifact":"handleDragEnd: different status → onTaskUpdate with explicit order at insert position"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"Drop on column droppable appends to end","status":"pass","artifact":"handleDragEnd detects Status droppable, calls onTaskUpdate without explicit order → maxOrder+1"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"closestCorners collision detection","status":"pass","artifact":"Better multi-container sorting — detects card corners for insertion between items"}
+{"timestamp":"2026-05-14T12:22:00Z","phase":"3","check":"bun run build","status":"pass","artifact":"721KB JS (211KB gzipped) + 51KB CSS (9KB gzipped), 0 TypeScript errors, 665ms"}

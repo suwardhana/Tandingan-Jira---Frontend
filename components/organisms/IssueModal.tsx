@@ -525,7 +525,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
                           <button
                             onClick={handleCommentSubmit}
                             disabled={!newComment.trim()}
-                            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-3 py-1.5 text-xs font-medium text-white bg-jira-blue rounded hover:bg-jira-blue-hover disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Save
                           </button>

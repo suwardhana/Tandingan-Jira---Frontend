@@ -128,6 +128,7 @@ const AppLayout: React.FC = () => {
       labels: newTask.labels || [],
       dueDate: newTask.dueDate,
       comments: [],
+      order: tasks.filter((t) => t.status === (newTask.status || Status.TODO)).length + 1,
       createdAt: getCurrentDateFormatted(),
       updatedAt: getCurrentDateFormatted(),
     };
@@ -145,15 +146,37 @@ const AppLayout: React.FC = () => {
   };
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
-    if (selectedTask && selectedTask.id === taskId) {
-      // selectedTask is derived from URL; no setSelectedTask needed
-    }
+    setTasks((prev) => {
+      // If status changed, auto-assign order to end of target column
+      if (updates.status) {
+        const maxOrder = prev
+          .filter((t) => t.status === updates.status && t.id !== taskId)
+          .reduce((max, t) => Math.max(max, t.order ?? 0), 0);
+        return prev.map((t) =>
+          t.id === taskId
+            ? { ...t, ...updates, order: updates.order ?? maxOrder + 1 }
+            : t
+        );
+      }
+      return prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
+    });
     try {
       await api.updateTask(taskId, updates);
     } catch {
       console.warn("API unavailable — update applied locally only");
     }
+  };
+
+  const handleReorder = (status: Status, orderedTaskIds: string[]) => {
+    setTasks((prev) =>
+      prev.map((t) => {
+        const idx = orderedTaskIds.indexOf(t.id);
+        if (idx !== -1) {
+          return { ...t, order: idx + 1 };
+        }
+        return t;
+      })
+    );
   };
 
   const handleAddComment = async (taskId: string, text: string) => {
@@ -247,7 +270,8 @@ const AppLayout: React.FC = () => {
             sprint={currentSprint}
             users={users}
             onTaskClick={handleTaskClick}
-            onTaskUpdate={(id, status) => handleUpdateTask(id, { status })}
+            onTaskUpdate={handleUpdateTask}
+            onReorder={handleReorder}
             onCreateClick={openCreateModal}
           />
         ) : (

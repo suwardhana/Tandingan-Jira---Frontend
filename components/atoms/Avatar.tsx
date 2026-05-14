@@ -15,15 +15,19 @@ const Avatar: React.FC<AvatarProps> = ({ src, name, size = 'md', className = '' 
     xl: 'size-20 text-xl',
   };
 
-  const containerClasses = `${sizeClasses[size]} rounded-full flex-shrink-0 object-cover border border-gray-200 dark:border-gray-700 ${className}`;
+  const containerClasses = `${sizeClasses[size]} rounded-full flex-shrink-0 object-cover ${className}`;
 
   if (src) {
     return <img src={src} alt={name || 'Avatar'} className={containerClasses} />;
   }
 
+  const initials = name
+    ? name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
+
   return (
-    <div className={`${containerClasses} bg-gray-100 dark:bg-slate-800 flex items-center justify-center border-dashed border-gray-300 dark:border-gray-600`}>
-      <span className="material-symbols-outlined text-slate-400" style={{ fontSize: size === 'sm' ? '14px' : '16px' }}>person</span>
+    <div className={`${containerClasses} bg-jira-blue dark:bg-blue-700 flex items-center justify-center text-white font-bold`}>
+      <span style={{ fontSize: size === 'sm' ? '8px' : size === 'lg' ? '14px' : '10px' }}>{initials}</span>
     </div>
   );
 };

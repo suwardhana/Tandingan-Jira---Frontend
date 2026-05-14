@@ -65,6 +65,7 @@ export const TASKS: Task[] = [
     dueDate: 'Oct 24, 2023',
     createdAt: 'Oct 10, 2023',
     updatedAt: 'Oct 12, 2023',
+    order: 1,
     labels: ['UX', 'Auth'],
     comments: [],
   },
@@ -82,6 +83,7 @@ export const TASKS: Task[] = [
     dueDate: 'Oct 25, 2023',
     createdAt: 'Oct 11, 2023',
     updatedAt: 'Oct 11, 2023',
+    order: 2,
     labels: ['Backend', 'Database'],
   },
   {
@@ -98,6 +100,7 @@ export const TASKS: Task[] = [
     dueDate: 'Oct 28, 2023',
     createdAt: 'Oct 12, 2023',
     updatedAt: 'Oct 15, 2023',
+    order: 1,
     labels: ['Backend', 'Payments'],
     subtasks: [
       { id: 'st1', title: 'Setup Stripe Account', completed: true },
@@ -118,6 +121,7 @@ export const TASKS: Task[] = [
     dueDate: 'Nov 01, 2023',
     createdAt: 'Oct 14, 2023',
     updatedAt: 'Oct 16, 2023',
+    order: 2,
     labels: ['Product'],
   },
   {
@@ -133,6 +137,7 @@ export const TASKS: Task[] = [
     sprintId: 's1',
     createdAt: 'Sep 30, 2023',
     updatedAt: 'Oct 05, 2023',
+    order: 1,
     labels: ['Docs'],
   },
   {
@@ -148,6 +153,7 @@ export const TASKS: Task[] = [
     sprintId: 's1',
     createdAt: 'Sep 28, 2023',
     updatedAt: 'Oct 02, 2023',
+    order: 2,
     labels: ['Frontend', 'Bug'],
   },
   {
@@ -163,6 +169,7 @@ export const TASKS: Task[] = [
     sprintId: 's1',
     createdAt: 'Oct 18, 2023',
     updatedAt: 'Oct 20, 2023',
+    order: 1,
     labels: ['Frontend', 'UX'],
   },
   {
@@ -179,6 +186,7 @@ export const TASKS: Task[] = [
     dueDate: 'Nov 05, 2023',
     createdAt: 'Oct 20, 2023',
     updatedAt: 'Oct 20, 2023',
+    order: 3,
     labels: ['UX', 'Design'],
   }
 ];

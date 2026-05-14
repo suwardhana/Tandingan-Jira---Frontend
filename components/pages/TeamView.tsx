@@ -14,7 +14,7 @@ const TeamView: React.FC<TeamViewProps> = ({ users, onAddMemberClick }) => {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Team Members</h2>
         <button 
             onClick={onAddMemberClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+            className="bg-jira-blue hover:bg-jira-blue-hover text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
         >
             <span className="material-symbols-outlined text-[18px]">person_add</span>
             Add Member

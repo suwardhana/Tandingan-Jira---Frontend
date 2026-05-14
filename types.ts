@@ -64,6 +64,7 @@ export interface Task {
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
+  order?: number;
   labels: string[];
   comments?: Comment[];
   subtasks?: Subtask[];

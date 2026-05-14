@@ -176,7 +176,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-500/20 transition-colors"
+              className="px-4 py-2 text-sm font-bold text-white bg-jira-blue hover:bg-jira-blue-hover rounded-lg shadow-lg shadow-blue-500/20 transition-colors"
             >
               Create Issue
             </button>
