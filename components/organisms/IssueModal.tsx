@@ -1,11 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Task, User, Priority, Status, IssueType } from "../../types";
+import { renderMarkdown } from "../../utils/markdown";
 import Avatar from "../atoms/Avatar";
 import PriorityIcon from "../atoms/PriorityIcon";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import Placeholder from "@tiptap/extension-placeholder";
+import MarkdownEditor from "../molecules/MarkdownEditor";
 
 interface IssueModalProps {
   task: Task | null;
@@ -38,10 +36,11 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
     const [isTypePickerOpen, setIsTypePickerOpen] = useState(false);
     const [isSubtaskInputVisible, setIsSubtaskInputVisible] = useState(false);
     const [newSubtask, setNewSubtask] = useState("");
+    const [isEditingDescription, setIsEditingDescription] = useState(false);
+    const [editDescription, setEditDescription] = useState("");
     const labelInputRef = useRef<HTMLInputElement>(null);
     const typePickerRef = useRef<HTMLDivElement>(null);
     const subtaskInputRef = useRef<HTMLInputElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
       if (isLabelInputVisible && labelInputRef.current) {
@@ -68,61 +67,6 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }, [isTypePickerOpen]);
-
-    // ── TipTap editor ────────────────────────────────────────────────────────
-    const editor = useEditor({
-      extensions: [
-        StarterKit,
-        Image.configure({
-          inline: true,
-          allowBase64: true,
-        }),
-        Placeholder.configure({
-          placeholder: "Add a detailed description...",
-        }),
-      ],
-      content: "",
-      editable: isOpen && !!task,
-      editorProps: {
-        attributes: {
-          class:
-            "prose prose-sm dark:prose-invert max-w-none min-h-[140px] w-full resize-y border-none bg-transparent p-3 text-sm text-slate-600 focus:outline-none dark:text-slate-300",
-        },
-      },
-      onUpdate: ({ editor }) => {
-        if (task) {
-          onUpdateTask(task.id, { description: editor.getHTML() });
-        }
-      },
-    });
-
-    // Set editor content when task becomes available
-    useEffect(() => {
-      if (editor && task && isOpen) {
-        const html = task.description || "";
-        if (editor.getHTML() !== html) {
-          editor.commands.setContent(html);
-        }
-      }
-    }, [editor, task, isOpen]);
-
-    const handleImageUpload = useCallback(() => {
-      imageInputRef.current?.click();
-    }, []);
-
-    const handleImageFile = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !editor) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          editor.chain().focus().setImage({ src: reader.result as string }).run();
-        };
-        reader.readAsDataURL(file);
-        if (imageInputRef.current) imageInputRef.current.value = "";
-      },
-      [editor],
-    );
 
     if (!isOpen || !task) return null;
 
@@ -314,63 +258,75 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                       Description
                     </h3>
-                    <div className="overflow-hidden rounded-lg border border-gray-200 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 dark:border-dark-border">
-                      <div className="flex items-center gap-1 border-b border-gray-200 bg-gray-50 p-1 dark:border-dark-border dark:bg-dark-bg">
-                        <button
-                          onClick={() => editor?.chain().focus().toggleBold().run()}
-                          className={`rounded p-1.5 transition-colors ${
-                            editor?.isActive("bold")
-                              ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                          }`}
-                          title="Bold"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">format_bold</span>
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().toggleItalic().run()}
-                          className={`rounded p-1.5 transition-colors ${
-                            editor?.isActive("italic")
-                              ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                          }`}
-                          title="Italic"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            format_italic
+
+                    {isEditingDescription ? (
+                      <div className="overflow-hidden rounded-lg border border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400">
+                        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-1.5 dark:border-dark-border dark:bg-dark-bg">
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Editing
                           </span>
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                          className={`rounded p-1.5 transition-colors ${
-                            editor?.isActive("bulletList")
-                              ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                          }`}
-                          title="Bullet list"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            format_list_bulleted
-                          </span>
-                        </button>
-                        <div className="mx-1 h-5 w-px bg-gray-300 dark:bg-slate-600" />
-                        <button
-                          onClick={handleImageUpload}
-                          className="rounded p-1.5 text-slate-600 transition-colors hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                          title="Attach image"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">image</span>
-                        </button>
-                        <input
-                          ref={imageInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFile}
-                          className="hidden"
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditingDescription(false);
+                              }}
+                              className="rounded px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onUpdateTask(task.id, { description: editDescription });
+                                setIsEditingDescription(false);
+                              }}
+                              className="rounded bg-jira-blue px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-jira-blue-hover"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                        <MarkdownEditor
+                          value={editDescription}
+                          onChange={setEditDescription}
+                          placeholder="Add a detailed description..."
+                          rows={10}
                         />
                       </div>
-                      <EditorContent editor={editor} />
-                    </div>
+                    ) : (
+                      <div
+                        className="group relative min-h-[80px] cursor-text rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 dark:border-dark-border dark:hover:border-slate-600"
+                        onClick={() => {
+                          setEditDescription(task.description || "");
+                          setIsEditingDescription(true);
+                        }}
+                      >
+                        {task.description ? (
+                          <div
+                            className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                            dangerouslySetInnerHTML={{
+                              __html: renderMarkdown(task.description),
+                            }}
+                          />
+                        ) : (
+                          <p className="text-sm text-slate-400 dark:text-slate-500">
+                            Add a detailed description...
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          className="absolute right-3 top-3 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-600 opacity-0 shadow-sm ring-1 ring-gray-300 transition-all hover:bg-gray-50 group-hover:opacity-100 dark:bg-dark-surface dark:text-slate-300 dark:ring-slate-600 dark:hover:bg-slate-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditDescription(task.description || "");
+                            setIsEditingDescription(true);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Priority, Status, IssueType, User, Task, Sprint } from "../../types";
+import MarkdownEditor from "../molecules/MarkdownEditor";
 
 interface CreateIssueModalProps {
   isOpen: boolean;
@@ -93,13 +94,12 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = React.memo(
               <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                 Description
               </label>
-              <textarea
-                rows={4}
+              <MarkdownEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
                 placeholder="Add a detailed description..."
-                className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-bg dark:text-white"
-              ></textarea>
+                rows={4}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
