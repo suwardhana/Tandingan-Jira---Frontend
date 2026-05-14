@@ -5,6 +5,7 @@
 This is a **React + TypeScript + Vite** project that implements a modern project management dashboard (Jira-like interface) called **TaskFlow**. The application features dark mode, drag-and-drop Kanban board, task management, team management, and reporting capabilities.
 
 **Key Technologies:**
+
 - React 19.2.3 with TypeScript
 - Vite 6.2.0 (build tool)
 - Tailwind CSS (via CDN) for styling
@@ -30,10 +31,12 @@ npm run preview
 ## Environment Setup
 
 **Required Environment Variables:**
+
 - `VITE_API_BASE_URL` - Backend API endpoint (default: `http://localhost:3344/api`)
 - `GEMINI_API_KEY` - Required for AI Studio integration (mentioned in README)
 
 **Configuration Files:**
+
 - `.env` - Environment variables (currently sets API base URL)
 - `vite.config.ts` - Vite configuration with path aliases and env injection
 - `tsconfig.json` - TypeScript configuration
@@ -64,6 +67,7 @@ D:/vibecoding/Tandingan-Jira---Frontend/
 ### Component Architecture
 
 **Atomic Design Structure:**
+
 - **Atoms**: Simple, reusable UI components (Avatar, StatusBadge, PriorityIcon)
 - **Molecules**: Composed atoms (TaskCard)
 - **Organisms**: Complex components (Sidebar, Header, Modals)
@@ -82,16 +86,36 @@ D:/vibecoding/Tandingan-Jira---Frontend/
 ### Type System
 
 **Key Types** (`types.ts`):
+
 ```typescript
 // Enums for fixed values
-enum Priority { LOW = 'Low', MEDIUM = 'Medium', HIGH = 'High', CRITICAL = 'Critical' }
-enum Status { TODO = 'To Do', IN_PROGRESS = 'In Progress', REVIEW = 'Review', DONE = 'Done' }
-enum IssueType { TASK = 'Task', BUG = 'Bug' }
+enum Priority {
+  LOW = "Low",
+  MEDIUM = "Medium",
+  HIGH = "High",
+  CRITICAL = "Critical",
+}
+enum Status {
+  TODO = "To Do",
+  IN_PROGRESS = "In Progress",
+  REVIEW = "Review",
+  DONE = "Done",
+}
+enum IssueType {
+  TASK = "Task",
+  BUG = "Bug",
+}
 
 // Core interfaces
-interface User { id: string; name: string; avatar: string; email: string; role?: string; }
-interface Task { 
-  id: string; 
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+  role?: string;
+}
+interface Task {
+  id: string;
   key: string; // e.g., PROJ-101
   title: string;
   status: Status;
@@ -99,17 +123,26 @@ interface Task {
   type: IssueType;
   // ... more fields
 }
-interface Sprint { id: string; name: string; startDate: string; endDate: string; goal: string; status: 'active' | 'future' | 'closed'; }
+interface Sprint {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  goal: string;
+  status: "active" | "future" | "closed";
+}
 ```
 
 ### API Layer Pattern (`api.ts`)
 
 **Snake Case ↔ Camel Case Transformation:**
+
 - All API responses are automatically converted from `snake_case` to `camelCase`
 - All API requests are automatically converted from `camelCase` to `snake_case`
 - Uses utility functions `fromApi()` and `toApi()` with recursive key transformation
 
 **API Methods:**
+
 ```typescript
 // Users
 api.fetchUsers(): Promise<User[]>
@@ -127,6 +160,7 @@ api.deleteTask(id: string): Promise<void>
 ```
 
 **Base URL Configuration:**
+
 - Default: `http://localhost:3344/api`
 - Configurable via `VITE_API_BASE_URL` environment variable
 - Uses `import.meta.env` for Vite environment variables
@@ -134,11 +168,13 @@ api.deleteTask(id: string): Promise<void>
 ### State Management Pattern
 
 **App.tsx** manages global state using React hooks:
+
 - **Data State**: `tasks`, `users`, `sprints` (fetched via API)
 - **UI State**: `currentView`, `isDark`, `selectedTask`, modal states
 - **Derived State**: `currentSprint`, `sprintTasks`, `currentUser`
 
 **State Flow:**
+
 1. Initial load in `useEffect` fetches all data
 2. Updates use optimistic UI updates + API calls
 3. Errors are logged to console (no error boundaries visible)
@@ -146,6 +182,7 @@ api.deleteTask(id: string): Promise<void>
 ### Dark Mode Implementation
 
 **Approach**: CSS class-based dark mode
+
 - Root element gets `.dark` class toggled via `document.documentElement.classList`
 - Tailwind's `dark:` prefix used throughout
 - Default theme: Dark mode (HTML has `class="dark"`)
@@ -154,6 +191,7 @@ api.deleteTask(id: string): Promise<void>
 ### Drag & Drop Pattern (BoardView)
 
 **HTML5 Drag and Drop API:**
+
 ```typescript
 // On drag start
 onDragStart={(e) => e.dataTransfer.setData('taskId', taskId)}
@@ -165,7 +203,8 @@ onDrop={(e) => {
 }}
 ```
 
-**Visual Feedback**: 
+**Visual Feedback**:
+
 - `cursor-grabbing` on active drag
 - `hover:ring-2 hover:ring-blue-500/50` on cards
 - Drop zones highlight on hover
@@ -173,6 +212,7 @@ onDrop={(e) => {
 ### Modal Pattern
 
 **Consistent Modal Structure:**
+
 ```typescript
 interface ModalProps {
   isOpen: boolean;
@@ -195,6 +235,7 @@ return (
 ## Styling & UI Patterns
 
 ### Tailwind CSS (CDN)
+
 - **Configured in `index.html`** with custom theme
 - **Colors**: Custom dark mode colors (`dark:bg-dark-bg`, `dark:border-dark-border`)
 - **Typography**: Inter font family
@@ -203,18 +244,21 @@ return (
 ### Common Class Patterns
 
 **Dark Mode:**
+
 ```tsx
-className="bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border"
+className = "bg-white dark:bg-dark-bg border-gray-200 dark:border-dark-border";
 ```
 
 **Interactive Elements:**
+
 ```tsx
-className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+className = "hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors";
 ```
 
 **Buttons:**
+
 ```tsx
-className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold"
+className = "px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold";
 ```
 
 ### Responsive Design
@@ -256,6 +300,7 @@ className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bo
 **Note**: This file contains **mock data** for development/testing. The application also uses real API calls via `api.ts`.
 
 **Mock Data Available:**
+
 - `USERS`: 4 sample users with avatars
 - `SPRINTS`: 2 sprints (1 active, 1 future)
 - `TASKS`: 8 tasks with various statuses, priorities, and types
@@ -265,27 +310,33 @@ className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bo
 ## Important Gotchas & Notes
 
 ### 1. **Component Duplication**
+
 There are duplicate component files in both:
-- `components/BoardView.tsx` 
+
+- `components/BoardView.tsx`
 - `components/pages/BoardView.tsx`
 
 **Use the `components/pages/` and `components/organisms/` structure.**
 
 ### 2. **No Testing Setup**
+
 - No test framework configured (Jest, Vitest, etc.)
 - No test files present
 - No test scripts in `package.json`
 
 ### 3. **No Error Boundaries**
+
 - Errors are logged to console only
 - No global error handling
 - No user-facing error messages
 
 ### 4. **No Loading States**
+
 - Loading is handled by checking if data exists
 - No spinners or skeleton loaders visible in code
 
 ### 5. **Comment API Not Implemented**
+
 ```typescript
 // In App.tsx
 const handleAddComment = (taskId: string, text: string) => {
@@ -294,30 +345,35 @@ const handleAddComment = (taskId: string, text: string) => {
 ```
 
 ### 6. **ID Generation Strategy**
+
 - Client generates IDs: `t${Date.now()}`, `u${Date.now()}`
 - Backend might overwrite (comment in code)
 - PHP migration defines ID as VARCHAR(128)
 
 ### 7. **Tailwind CDN Usage**
+
 - Not using PostCSS/Build-time Tailwind
 - Configured in HTML `<script>` tag
 - All styling via CDN (no PurgeCSS)
 
 ### 8. **Import Map in HTML**
+
 ```html
 <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "recharts": "https://esm.sh/recharts@^3.6.0"
+  {
+    "imports": {
+      "react/": "https://esm.sh/react@^19.2.3/",
+      "react": "https://esm.sh/react@^19.2.3",
+      "recharts": "https://esm.sh/recharts@^3.6.0"
+    }
   }
-}
 </script>
 ```
 
 ### 9. **Path Aliases**
+
 Configured in `vite.config.ts` and `tsconfig.json`:
+
 ```typescript
 // vite.config.ts
 resolve: {
@@ -330,6 +386,7 @@ resolve: {
 ```
 
 ### 10. **API Base URL**
+
 - Default: `http://localhost:3344/api`
 - Must be set in `.env` or via environment
 - Backend expected to be running on port 3344
@@ -337,46 +394,55 @@ resolve: {
 ## Views & Features
 
 ### BoardView
+
 - Kanban board with drag-and-drop
 - Columns: To Do, In Progress, Review, Done
 - Sprint header with status badge
 - Task cards with priority, labels, assignee
 
 ### ListView
+
 - Table/list view of tasks
 - Same data as BoardView, different presentation
 
 ### ReportsView
+
 - Data visualization using Recharts
 - Charts for sprint progress and ticket distribution
 
 ### TeamView
+
 - Team member management
 - Add member functionality
 
 ### SettingsView
+
 - Placeholder for settings (empty in current implementation)
 
 ## Common Development Tasks
 
 ### Adding a New Component
+
 1. Create in appropriate directory (`atoms/`, `molecules/`, `organisms/`, `pages/`)
 2. Define Props interface
 3. Use PascalCase naming
 4. Follow existing styling patterns
 
 ### Adding a New API Endpoint
+
 1. Add method to `api.ts`
 2. Use `fromApi()` for response transformation
 3. Use `toApi()` for request transformation
 4. Update `types.ts` if needed
 
 ### Modifying Dark Mode Colors
+
 1. Update `index.html` Tailwind config
 2. Update CSS variables if used
 3. Ensure both light and dark variants exist
 
 ### Adding Environment Variables
+
 1. Add to `.env` file
 2. Access via `import.meta.env.VITE_...`
 3. Update `vite.config.ts` if needed for `define`
@@ -384,16 +450,19 @@ resolve: {
 ## Troubleshooting
 
 ### API Connection Issues
+
 - Check if backend is running on port 3344
 - Verify `VITE_API_BASE_URL` in `.env`
 - Check browser console for fetch errors
 
 ### Styling Issues
+
 - Tailwind CDN must load properly
 - Check if `.dark` class is on `<html>` element
 - Verify custom colors in Tailwind config
 
 ### Type Errors
+
 - Run `npm install` to ensure types are available
 - Check `tsconfig.json` paths
 - Verify imports use correct paths
@@ -401,6 +470,7 @@ resolve: {
 ## Future Considerations
 
 **Missing Features:**
+
 - Authentication/Authorization
 - Error boundaries
 - Loading states
@@ -413,6 +483,7 @@ resolve: {
 - Real-time updates (WebSockets)
 
 **Technical Debt:**
+
 - Component file duplication
 - No error handling beyond console.log
 - Mock data mixed with real API

@@ -5,14 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-bun run dev      # Start dev server on port 3000 (host: 0.0.0.0)
-bun run build    # Production build
-bun run preview  # Preview production build
+bun run dev        # Start dev server on port 3000 (host: 0.0.0.0)
+bun run build      # Production build
+bun run preview    # Preview production build
+bun run lint       # ESLint (flat config)
+bun run lint:fix   # ESLint auto-fix
+bun run format     # Prettier format all files
+bun run format:check  # Prettier check only
 ```
 
 Package manager is **bun** (v1.3.13+). Lockfile is `bun.lock`.
 
-No test runner or linter is configured.
+**ESLint v9** with flat config (`eslint.config.js`) + **Prettier v3** with `prettier-plugin-tailwindcss`. TypeScript via `typescript-eslint`. React hooks + refresh plugins.
 
 ## Architecture
 

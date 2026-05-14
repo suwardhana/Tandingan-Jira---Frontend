@@ -1,20 +1,20 @@
 export enum Priority {
-  LOW = 'Low',
-  MEDIUM = 'Medium',
-  HIGH = 'High',
-  CRITICAL = 'Critical',
+  LOW = "Low",
+  MEDIUM = "Medium",
+  HIGH = "High",
+  CRITICAL = "Critical",
 }
 
 export enum Status {
-  TODO = 'To Do',
-  IN_PROGRESS = 'In Progress',
-  REVIEW = 'Review',
-  DONE = 'Done',
+  TODO = "To Do",
+  IN_PROGRESS = "In Progress",
+  REVIEW = "Review",
+  DONE = "Done",
 }
 
 export enum IssueType {
-  TASK = 'Task',
-  BUG = 'Bug',
+  TASK = "Task",
+  BUG = "Bug",
 }
 
 export interface User {
@@ -47,7 +47,7 @@ export interface Sprint {
   startDate: string;
   endDate: string;
   goal: string;
-  status: 'active' | 'future' | 'closed';
+  status: "active" | "future" | "closed";
 }
 
 export interface Task {
@@ -68,7 +68,7 @@ export interface Task {
   labels: string[];
   comments?: Comment[];
   subtasks?: Subtask[];
-  attachments?: { name: string; size: string; type: 'pdf' | 'image' | 'other' }[];
+  attachments?: { name: string; size: string; type: "pdf" | "image" | "other" }[];
 }
 
-export type ViewMode = 'board' | 'list' | 'reports' | 'team' | 'settings';
+export type ViewMode = "board" | "list" | "reports" | "team" | "settings";

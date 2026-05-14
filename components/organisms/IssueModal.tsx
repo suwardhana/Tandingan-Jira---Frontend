@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Task, User, Priority, Status, IssueType, Subtask } from "../../types";
+import { Task, User, Priority, Status, IssueType } from "../../types";
 import Avatar from "../atoms/Avatar";
 import PriorityIcon from "../atoms/PriorityIcon";
 
@@ -27,9 +27,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
   onToggleSubtask,
 }) => {
   const [newComment, setNewComment] = useState("");
-  const [activeTab, setActiveTab] = useState<"comments" | "history">(
-    "comments"
-  );
+  const [activeTab, setActiveTab] = useState<"comments" | "history">("comments");
   const [isLabelInputVisible, setIsLabelInputVisible] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [isTypePickerOpen, setIsTypePickerOpen] = useState(false);
@@ -53,10 +51,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        typePickerRef.current &&
-        !typePickerRef.current.contains(event.target as Node)
-      ) {
+      if (typePickerRef.current && !typePickerRef.current.contains(event.target as Node)) {
         setIsTypePickerOpen(false);
       }
     };
@@ -115,9 +110,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
   };
 
   const insertMarkdown = (syntax: string) => {
-    const textarea = document.getElementById(
-      "description-editor"
-    ) as HTMLTextAreaElement;
+    const textarea = document.getElementById("description-editor") as HTMLTextAreaElement;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -189,29 +182,28 @@ const IssueModal: React.FC<IssueModalProps> = ({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
-      <div className="relative bg-white dark:bg-dark-surface w-full max-w-4xl max-h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+      <div className="relative flex max-h-[90vh] w-full max-w-4xl animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-dark-surface">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-border">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-dark-border">
           <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
             <div className="relative" ref={typePickerRef}>
               <button
                 onClick={() => setIsTypePickerOpen(!isTypePickerOpen)}
-                className="flex items-center justify-center p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="flex items-center justify-center rounded p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
                 title="Change issue type"
               >
                 <span
-                  className={`material-symbols-outlined text-2xl ${task.type === IssueType.BUG
-                    ? "text-red-500"
-                    : "text-blue-500"
-                    }`}
+                  className={`material-symbols-outlined text-2xl ${
+                    task.type === IssueType.BUG ? "text-red-500" : "text-blue-500"
+                  }`}
                 >
                   {task.type === IssueType.BUG ? "bug_report" : "check_box"}
                 </span>
               </button>
 
               {isTypePickerOpen && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-dark-surface rounded-lg shadow-xl border border-gray-200 dark:border-dark-border py-1 z-50 animate-[fadeIn_0.1s_ease-out]">
-                  <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase border-b border-gray-100 dark:border-dark-border mb-1">
+                <div className="absolute left-0 top-full z-50 mt-1 w-40 animate-[fadeIn_0.1s_ease-out] rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-dark-border dark:bg-dark-surface">
+                  <div className="mb-1 border-b border-gray-100 px-3 py-2 text-xs font-bold uppercase text-slate-400 dark:border-dark-border">
                     Change Type
                   </div>
                   {Object.values(IssueType).map((type) => (
@@ -221,41 +213,37 @@ const IssueModal: React.FC<IssueModalProps> = ({
                         onUpdateTask(task.id, { type });
                         setIsTypePickerOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${task.type === type
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                        : "text-slate-700 dark:text-slate-300"
-                        }`}
+                      className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50 ${
+                        task.type === type
+                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                          : "text-slate-700 dark:text-slate-300"
+                      }`}
                     >
                       <span
-                        className={`material-symbols-outlined text-[20px] ${type === IssueType.BUG
-                          ? "text-red-500"
-                          : "text-blue-500"
-                          }`}
+                        className={`material-symbols-outlined text-[20px] ${
+                          type === IssueType.BUG ? "text-red-500" : "text-blue-500"
+                        }`}
                       >
                         {type === IssueType.BUG ? "bug_report" : "check_box"}
                       </span>
                       <span>{type}</span>
                       {task.type === type && (
-                        <span className="material-symbols-outlined text-[16px] ml-auto">
-                          check
-                        </span>
+                        <span className="material-symbols-outlined ml-auto text-[16px]">check</span>
                       )}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <span className="font-medium hover:underline cursor-pointer text-base">
-              {task.key}
-            </span>
+            <span className="cursor-pointer text-base font-medium hover:underline">{task.key}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50">
+            <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200">
               <span className="material-symbols-outlined">more_horiz</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50"
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
@@ -263,20 +251,18 @@ const IssueModal: React.FC<IssueModalProps> = ({
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-full">
+        <div className="custom-scrollbar flex-1 overflow-y-auto">
+          <div className="grid min-h-full grid-cols-1 lg:grid-cols-12">
             {/* Main Content */}
-            <div className="lg:col-span-8 p-6 space-y-8 border-r border-gray-200 dark:border-dark-border border-b lg:border-b-0">
+            <div className="space-y-8 border-b border-r border-gray-200 p-6 dark:border-dark-border lg:col-span-8 lg:border-b-0">
               <div>
                 <div className="group relative">
                   <input
                     value={task.title}
-                    onChange={(e) =>
-                      onUpdateTask(task.id, { title: e.target.value })
-                    }
-                    className="text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-6 bg-transparent hover:bg-gray-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-dark-bg border border-transparent hover:border-gray-200 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded p-2 -ml-2 w-full transition-all"
+                    onChange={(e) => onUpdateTask(task.id, { title: e.target.value })}
+                    className="-ml-2 mb-6 w-full rounded border border-transparent bg-transparent p-2 text-2xl font-bold leading-tight text-slate-900 transition-all hover:border-gray-200 hover:bg-gray-100 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 dark:text-white dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:focus:bg-dark-bg"
                   />
-                  <span className="material-symbols-outlined absolute right-2 top-3 text-slate-400 opacity-0 group-hover:opacity-100 pointer-events-none">
+                  <span className="material-symbols-outlined pointer-events-none absolute right-2 top-3 text-slate-400 opacity-0 group-hover:opacity-100">
                     edit
                   </span>
                 </div>
@@ -285,29 +271,25 @@ const IssueModal: React.FC<IssueModalProps> = ({
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     Description
                   </h3>
-                  <div className="border border-gray-200 dark:border-dark-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-                    <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
+                  <div className="overflow-hidden rounded-lg border border-gray-200 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 dark:border-dark-border">
+                    <div className="flex items-center gap-1 border-b border-gray-200 bg-gray-50 p-1 dark:border-dark-border dark:bg-dark-bg">
                       <button
                         onClick={() => insertMarkdown("**")}
-                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+                        className="rounded p-1.5 text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
                         title="Bold"
                       >
-                        <span className="material-symbols-outlined text-[18px]">
-                          format_bold
-                        </span>
+                        <span className="material-symbols-outlined text-[18px]">format_bold</span>
                       </button>
                       <button
                         onClick={() => insertMarkdown("*")}
-                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+                        className="rounded p-1.5 text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
                         title="Italic"
                       >
-                        <span className="material-symbols-outlined text-[18px]">
-                          format_italic
-                        </span>
+                        <span className="material-symbols-outlined text-[18px]">format_italic</span>
                       </button>
                       <button
                         onClick={() => insertMarkdown("list")}
-                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+                        className="rounded p-1.5 text-slate-600 hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
                         title="List"
                       >
                         <span className="material-symbols-outlined text-[18px]">
@@ -318,10 +300,8 @@ const IssueModal: React.FC<IssueModalProps> = ({
                     <textarea
                       id="description-editor"
                       value={task.description}
-                      onChange={(e) =>
-                        onUpdateTask(task.id, { description: e.target.value })
-                      }
-                      className="w-full bg-transparent border-none p-3 text-sm text-slate-600 dark:text-slate-300 focus:ring-0 resize-y min-h-[120px]"
+                      onChange={(e) => onUpdateTask(task.id, { description: e.target.value })}
+                      className="min-h-[120px] w-full resize-y border-none bg-transparent p-3 text-sm text-slate-600 focus:ring-0 dark:text-slate-300"
                       placeholder="Add a detailed description..."
                     />
                   </div>
@@ -331,23 +311,21 @@ const IssueModal: React.FC<IssueModalProps> = ({
               {/* Subtasks Section - Always visible */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Subtasks
-                  </h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Subtasks</h3>
                   {task.subtasks && task.subtasks.length > 0 && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {task.subtasks.filter((s) => s.completed).length} of{" "}
-                        {task.subtasks.length}
+                        {task.subtasks.filter((s) => s.completed).length} of {task.subtasks.length}
                       </span>
-                      <div className="h-1.5 w-24 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
                         <div
                           className="h-full bg-blue-500 transition-all"
                           style={{
-                            width: `${(task.subtasks.filter((s) => s.completed).length /
+                            width: `${
+                              (task.subtasks.filter((s) => s.completed).length /
                                 task.subtasks.length) *
                               100
-                              }%`,
+                            }%`,
                           }}
                         ></div>
                       </div>
@@ -358,27 +336,26 @@ const IssueModal: React.FC<IssueModalProps> = ({
                   {task.subtasks?.map((sub) => (
                     <div
                       key={sub.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-colors"
+                      className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     >
                       <input
                         type="checkbox"
                         checked={sub.completed}
-                        onChange={(e) =>
-                          handleToggleSubtask(sub.id, e.target.checked)
-                        }
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        onChange={(e) => handleToggleSubtask(sub.id, e.target.checked)}
+                        className="cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span
-                        className={`text-sm flex-1 ${sub.completed
-                            ? "line-through text-slate-400"
+                        className={`flex-1 text-sm ${
+                          sub.completed
+                            ? "text-slate-400 line-through"
                             : "text-slate-700 dark:text-slate-200"
-                          }`}
+                        }`}
                       >
                         {sub.title}
                       </span>
                       <button
                         onClick={() => handleDeleteSubtask(sub.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all"
+                        className="rounded p-1 opacity-0 transition-all hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/20"
                         title="Delete subtask"
                       >
                         <span className="material-symbols-outlined text-[18px] text-red-500">
@@ -390,8 +367,8 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
                   {/* Add Subtask Input */}
                   {isSubtaskInputVisible ? (
-                    <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <span className="material-symbols-outlined text-slate-400 text-[20px]">
+                    <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/10">
+                      <span className="material-symbols-outlined text-[20px] text-slate-400">
                         add_circle
                       </span>
                       <input
@@ -411,27 +388,23 @@ const IssueModal: React.FC<IssueModalProps> = ({
                             setIsSubtaskInputVisible(false);
                           }
                         }}
-                        className="flex-1 bg-transparent border-none text-sm text-slate-700 dark:text-slate-200 focus:ring-0 p-0"
+                        className="flex-1 border-none bg-transparent p-0 text-sm text-slate-700 focus:ring-0 dark:text-slate-200"
                         placeholder="Type subtask title and press Enter..."
                       />
                       <button
                         onClick={handleAddSubtask}
                         disabled={!newSubtask.trim()}
-                        className="text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-blue-600 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <span className="material-symbols-outlined text-[20px]">
-                          check
-                        </span>
+                        <span className="material-symbols-outlined text-[20px]">check</span>
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setIsSubtaskInputVisible(true)}
-                      className="flex items-center gap-2 p-2 text-sm text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors"
+                      className="flex items-center gap-2 rounded-lg p-2 text-sm text-slate-500 transition-colors hover:bg-slate-50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-blue-400"
                     >
-                      <span className="material-symbols-outlined text-[20px]">
-                        add
-                      </span>
+                      <span className="material-symbols-outlined text-[20px]">add</span>
                       <span>Add subtask</span>
                     </button>
                   )}
@@ -442,34 +415,36 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   Attachments
                 </h3>
-                <div className="border-2 border-dashed border-gray-200 dark:border-dark-border rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-slate-400 text-3xl mb-2">
+                <div className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 p-6 text-center transition-colors hover:bg-slate-50 dark:border-dark-border dark:hover:bg-slate-800/30">
+                  <span className="material-symbols-outlined mb-2 text-3xl text-slate-400">
                     cloud_upload
                   </span>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     Drop files to attach, or{" "}
-                    <span className="text-blue-500 font-medium">browse</span>
+                    <span className="font-medium text-blue-500">browse</span>
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-dark-border">
+              <div className="space-y-4 border-t border-gray-200 pt-6 dark:border-dark-border">
                 <div className="flex gap-6 border-b border-gray-200 dark:border-dark-border">
                   <button
                     onClick={() => setActiveTab("comments")}
-                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeTab === "comments"
-                      ? "text-blue-600 border-blue-600"
-                      : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                      }`}
+                    className={`border-b-2 pb-2 text-sm font-semibold transition-colors ${
+                      activeTab === "comments"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
                   >
                     Comments
                   </button>
                   <button
                     onClick={() => setActiveTab("history")}
-                    className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${activeTab === "history"
-                      ? "text-blue-600 border-blue-600"
-                      : "text-slate-500 border-transparent hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                      }`}
+                    className={`border-b-2 pb-2 text-sm font-semibold transition-colors ${
+                      activeTab === "history"
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    }`}
                   >
                     History
                   </button>
@@ -477,18 +452,12 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
                 {activeTab === "comments" ? (
                   <>
-                    <div className="space-y-4 mb-6">
+                    <div className="mb-6 space-y-4">
                       {task.comments?.map((comment) => {
-                        const commentUser = users.find(
-                          (u) => u.id === comment.userId
-                        );
+                        const commentUser = users.find((u) => u.id === comment.userId);
                         return (
                           <div key={comment.id} className="flex gap-3">
-                            <Avatar
-                              src={commentUser?.avatar}
-                              name={commentUser?.name}
-                              size="lg"
-                            />
+                            <Avatar src={commentUser?.avatar} name={commentUser?.name} size="lg" />
                             <div className="flex-1 space-y-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -508,16 +477,12 @@ const IssueModal: React.FC<IssueModalProps> = ({
                     </div>
 
                     <div className="flex gap-3">
-                      <Avatar
-                        src={currentUser.avatar}
-                        name={currentUser.name}
-                        size="lg"
-                      />
+                      <Avatar src={currentUser.avatar} name={currentUser.name} size="lg" />
                       <div className="flex-1">
                         <textarea
                           value={newComment}
                           onChange={(e) => setNewComment(e.target.value)}
-                          className="w-full rounded-lg border-gray-300 dark:border-dark-border dark:bg-dark-bg text-sm focus:ring-blue-500 focus:border-blue-500 dark:text-white"
+                          className="w-full rounded-lg border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-bg dark:text-white"
                           rows={2}
                           placeholder="Add a comment..."
                         ></textarea>
@@ -525,7 +490,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
                           <button
                             onClick={handleCommentSubmit}
                             disabled={!newComment.trim()}
-                            className="px-3 py-1.5 text-xs font-medium text-white bg-jira-blue rounded hover:bg-jira-blue-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded bg-jira-blue px-3 py-1.5 text-xs font-medium text-white hover:bg-jira-blue-hover disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Save
                           </button>
@@ -536,18 +501,14 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 ) : (
                   <div className="space-y-4">
                     {dummyHistory.map((item) => (
-                      <div key={item.id} className="flex gap-3 items-start">
+                      <div key={item.id} className="flex items-start gap-3">
                         <div className="mt-1 size-2 rounded-full bg-gray-300 dark:bg-slate-600"></div>
                         <div className="text-sm">
                           <span className="font-bold text-slate-900 dark:text-white">
                             {item.user}
                           </span>{" "}
-                          <span className="text-slate-600 dark:text-slate-300">
-                            {item.action}
-                          </span>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {item.time}
-                          </p>
+                          <span className="text-slate-600 dark:text-slate-300">{item.action}</span>
+                          <p className="mt-0.5 text-xs text-slate-400">{item.time}</p>
                         </div>
                       </div>
                     ))}
@@ -557,17 +518,15 @@ const IssueModal: React.FC<IssueModalProps> = ({
             </div>
 
             {/* Sidebar Info */}
-            <div className="lg:col-span-4 p-6 space-y-6 bg-gray-50/50 dark:bg-dark-bg/20">
+            <div className="space-y-6 bg-gray-50/50 p-6 dark:bg-dark-bg/20 lg:col-span-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Status
                 </label>
                 <select
                   value={task.status}
-                  onChange={(e) =>
-                    onUpdateTask(task.id, { status: e.target.value as Status })
-                  }
-                  className="w-full bg-white dark:bg-dark-surface border-gray-200 dark:border-dark-border rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => onUpdateTask(task.id, { status: e.target.value as Status })}
+                  className="w-full rounded-lg border-gray-200 bg-white text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-surface dark:text-white"
                 >
                   {Object.values(Status).map((s) => (
                     <option key={s} value={s}>
@@ -578,14 +537,12 @@ const IssueModal: React.FC<IssueModalProps> = ({
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-gray-200 dark:border-dark-border">
+                <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-slate-900 dark:border-dark-border dark:text-white">
                   Details
                 </h3>
 
                 <div className="grid grid-cols-[100px_1fr] items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Assignee
-                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Assignee</span>
                   <div className="relative">
                     <select
                       value={task.assigneeId || ""}
@@ -594,7 +551,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
                           assigneeId: e.target.value || undefined,
                         })
                       }
-                      className="w-full pl-9 pr-4 py-2 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md border border-gray-200 dark:border-dark-border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer appearance-none shadow-sm transition-colors"
+                      className="w-full cursor-pointer appearance-none rounded-md border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-surface dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       <option value="">Unassigned</option>
                       {users.map((u) => (
@@ -608,10 +565,10 @@ const IssueModal: React.FC<IssueModalProps> = ({
                         src={assignee.avatar}
                         name={assignee.name}
                         size="sm"
-                        className="absolute left-2.5 top-2 pointer-events-none"
+                        className="pointer-events-none absolute left-2.5 top-2"
                       />
                     ) : (
-                      <span className="material-symbols-outlined absolute left-2 top-2 text-slate-400 text-lg pointer-events-none">
+                      <span className="material-symbols-outlined pointer-events-none absolute left-2 top-2 text-lg text-slate-400">
                         person
                       </span>
                     )}
@@ -619,9 +576,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-[100px_1fr] items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Priority
-                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Priority</span>
                   <div className="relative">
                     <select
                       value={task.priority}
@@ -630,7 +585,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
                           priority: e.target.value as Priority,
                         })
                       }
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-slate-800 rounded-md border border-gray-200 dark:border-dark-border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm text-slate-700 dark:text-slate-200 font-medium cursor-pointer appearance-none shadow-sm transition-colors"
+                      className="w-full cursor-pointer appearance-none rounded-md border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-surface dark:text-slate-200 dark:hover:bg-slate-800"
                     >
                       {Object.values(Priority).map((p) => (
                         <option key={p} value={p}>
@@ -638,36 +593,30 @@ const IssueModal: React.FC<IssueModalProps> = ({
                         </option>
                       ))}
                     </select>
-                    <div className="absolute left-2 top-2 pointer-events-none">
+                    <div className="pointer-events-none absolute left-2 top-2">
                       <PriorityIcon priority={task.priority} />
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-[100px_1fr] items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Due Date
-                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Due Date</span>
                   <input
                     type="date"
                     value={formatDateForInput(task.dueDate)}
                     onChange={handleDateChange}
-                    className="w-full py-1 bg-transparent hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-md border-transparent focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm text-slate-700 dark:text-slate-300"
+                    className="w-full rounded-md border-transparent bg-transparent py-1 text-sm text-slate-700 hover:bg-slate-200/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-700/50"
                   />
                 </div>
 
                 <div className="grid grid-cols-[100px_1fr] items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Created
-                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Created</span>
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {task.createdAt}
                   </span>
                 </div>
                 <div className="grid grid-cols-[100px_1fr] items-center gap-2">
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    Updated
-                  </span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Updated</span>
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {task.updatedAt}
                   </span>
@@ -676,13 +625,13 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Labels
                   </label>
                   {!isLabelInputVisible && (
                     <button
                       onClick={() => setIsLabelInputVisible(true)}
-                      className="text-blue-500 hover:underline text-xs"
+                      className="text-xs text-blue-500 hover:underline"
                     >
                       Add
                     </button>
@@ -692,12 +641,12 @@ const IssueModal: React.FC<IssueModalProps> = ({
                   {(task.labels || []).map((l) => (
                     <span
                       key={l}
-                      className="group relative px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-gray-200 dark:border-gray-700 flex items-center gap-1"
+                      className="group relative flex items-center gap-1 rounded border border-gray-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-gray-700 dark:bg-slate-800 dark:text-slate-300"
                     >
                       {l}
                       <button
                         onClick={() => handleRemoveLabel(l)}
-                        className="hidden group-hover:block hover:text-red-500"
+                        className="hidden hover:text-red-500 group-hover:block"
                       >
                         <span className="material-symbols-outlined text-[10px] font-bold">
                           close
@@ -719,17 +668,15 @@ const IssueModal: React.FC<IssueModalProps> = ({
                       onBlur={() => {
                         if (!newLabel) setIsLabelInputVisible(false);
                       }}
-                      className="w-24 px-2 py-1 text-xs rounded border border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white dark:bg-dark-bg text-slate-900 dark:text-white"
+                      className="w-24 rounded border border-blue-500 bg-white px-2 py-1 text-xs text-slate-900 focus:ring-1 focus:ring-blue-500 dark:bg-dark-bg dark:text-white"
                       placeholder="Type & Enter"
                     />
                   ) : (
                     <button
                       onClick={() => setIsLabelInputVisible(true)}
-                      className="px-2 py-1 rounded border border-dashed border-gray-300 dark:border-gray-600 text-slate-400 text-xs hover:text-blue-500 hover:border-blue-500 flex items-center"
+                      className="flex items-center rounded border border-dashed border-gray-300 px-2 py-1 text-xs text-slate-400 hover:border-blue-500 hover:text-blue-500 dark:border-gray-600"
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        add
-                      </span>
+                      <span className="material-symbols-outlined text-sm">add</span>
                     </button>
                   )}
                 </div>

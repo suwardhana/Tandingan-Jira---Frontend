@@ -1,7 +1,6 @@
 import { Task, User, Sprint, Subtask, Comment } from "./types";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3344/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3344/api";
 
 const headers = {
   "Content-Type": "application/json",
@@ -14,10 +13,7 @@ const snakeToCamel = (str: string): string =>
 const camelToSnake = (str: string): string =>
   str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-const transformKeys = <T>(
-  obj: any,
-  transformer: (key: string) => string
-): T => {
+const transformKeys = <T>(obj: any, transformer: (key: string) => string): T => {
   if (Array.isArray(obj)) {
     return obj.map((item) => transformKeys(item, transformer)) as T;
   }
@@ -121,10 +117,7 @@ export const api = {
     return fromApi<Subtask[]>(data);
   },
 
-  createSubtask: async (
-    taskId: string,
-    subtask: Partial<Subtask>
-  ): Promise<Subtask> => {
+  createSubtask: async (taskId: string, subtask: Partial<Subtask>): Promise<Subtask> => {
     const res = await fetch(`${BASE_URL}/tasks/${taskId}/subtasks`, {
       method: "POST",
       headers,
@@ -135,10 +128,7 @@ export const api = {
     return fromApi<Subtask>(data);
   },
 
-  updateSubtask: async (
-    id: string,
-    updates: Partial<Subtask>
-  ): Promise<Subtask> => {
+  updateSubtask: async (id: string, updates: Partial<Subtask>): Promise<Subtask> => {
     const res = await fetch(`${BASE_URL}/subtasks/${id}`, {
       method: "PUT",
       headers,
@@ -164,10 +154,7 @@ export const api = {
     return fromApi<Comment[]>(data);
   },
 
-  createComment: async (
-    taskId: string,
-    comment: Partial<Comment>
-  ): Promise<Comment> => {
+  createComment: async (taskId: string, comment: Partial<Comment>): Promise<Comment> => {
     const res = await fetch(`${BASE_URL}/tasks/${taskId}/comments`, {
       method: "POST",
       headers,
@@ -178,10 +165,7 @@ export const api = {
     return fromApi<Comment>(data);
   },
 
-  updateComment: async (
-    id: string,
-    updates: Partial<Comment>
-  ): Promise<Comment> => {
+  updateComment: async (id: string, updates: Partial<Comment>): Promise<Comment> => {
     const res = await fetch(`${BASE_URL}/comments/${id}`, {
       method: "PUT",
       headers,

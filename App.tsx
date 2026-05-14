@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import Sidebar from "./components/organisms/Sidebar";
 import Header from "./components/organisms/Header";
 import BoardView from "./components/pages/BoardView";
@@ -38,9 +46,11 @@ const AppLayout: React.FC = () => {
 
   // ── Derive view + modal state from URL ──────────────────────────────────
   const pathSegments = location.pathname.split("/").filter(Boolean);
-  const currentView: ViewMode = (["board", "list", "reports", "team", "settings"].includes(pathSegments[0])
-    ? pathSegments[0]
-    : "board") as ViewMode;
+  const currentView: ViewMode = (
+    ["board", "list", "reports", "team", "settings"].includes(pathSegments[0])
+      ? pathSegments[0]
+      : "board"
+  ) as ViewMode;
 
   const taskKey = pathSegments[1] === "task" ? pathSegments[2] : undefined;
   const selectedTask = useMemo(() => {
@@ -79,7 +89,13 @@ const AppLayout: React.FC = () => {
   // ── Derived data ────────────────────────────────────────────────────────
   const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
   const sprintTasks = tasks.filter((t) => t.sprintId === currentSprintId);
-  const currentUser = users[0] || { id: "temp", name: "Loading...", email: "", role: "", avatar: "" };
+  const currentUser = users[0] || {
+    id: "temp",
+    name: "Loading...",
+    email: "",
+    role: "",
+    avatar: "",
+  };
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -153,9 +169,7 @@ const AppLayout: React.FC = () => {
           .filter((t) => t.status === updates.status && t.id !== taskId)
           .reduce((max, t) => Math.max(max, t.order ?? 0), 0);
         return prev.map((t) =>
-          t.id === taskId
-            ? { ...t, ...updates, order: updates.order ?? maxOrder + 1 }
-            : t
+          t.id === taskId ? { ...t, ...updates, order: updates.order ?? maxOrder + 1 } : t,
         );
       }
       return prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
@@ -175,7 +189,7 @@ const AppLayout: React.FC = () => {
           return { ...t, order: idx + 1 };
         }
         return t;
-      })
+      }),
     );
   };
 
@@ -183,7 +197,9 @@ const AppLayout: React.FC = () => {
     try {
       const createdComment = await api.createComment(taskId, { text, userId: currentUser.id });
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, comments: [...(t.comments || []), createdComment] } : t))
+        prev.map((t) =>
+          t.id === taskId ? { ...t, comments: [...(t.comments || []), createdComment] } : t,
+        ),
       );
       toast("Comment added", "success");
     } catch {
@@ -213,7 +229,9 @@ const AppLayout: React.FC = () => {
     try {
       const createdSubtask = await api.createSubtask(taskId, { title });
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] } : t))
+        prev.map((t) =>
+          t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] } : t,
+        ),
       );
       toast("Subtask added", "success");
     } catch {
@@ -225,7 +243,7 @@ const AppLayout: React.FC = () => {
     try {
       await api.deleteSubtask(subtaskId);
       setTasks((prev) =>
-        prev.map((t) => ({ ...t, subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId) }))
+        prev.map((t) => ({ ...t, subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId) })),
       );
       toast("Subtask deleted", "success");
     } catch {
@@ -240,7 +258,7 @@ const AppLayout: React.FC = () => {
         prev.map((t) => ({
           ...t,
           subtasks: (t.subtasks || []).map((s) => (s.id === subtaskId ? { ...s, completed } : s)),
-        }))
+        })),
       );
     } catch {
       console.warn("API unavailable — subtask toggle local only");
@@ -275,7 +293,9 @@ const AppLayout: React.FC = () => {
             onCreateClick={openCreateModal}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-slate-500">No sprints available</div>
+          <div className="flex h-full items-center justify-center text-slate-500">
+            No sprints available
+          </div>
         );
       case "list":
         return (
@@ -300,7 +320,7 @@ const AppLayout: React.FC = () => {
   const viewKey = pathSegments[0] || "board";
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
+    <div className="flex h-screen bg-gray-50 transition-colors duration-200 dark:bg-dark-bg">
       <Sidebar
         currentView={currentView}
         onViewChange={handleViewChange}
@@ -309,7 +329,7 @@ const AppLayout: React.FC = () => {
         currentUser={currentUser}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
         <Header
           currentView={currentView}
           onCreateClick={openCreateModal}

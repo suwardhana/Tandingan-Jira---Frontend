@@ -30,7 +30,11 @@ const config: Record<Priority, { icon: string; color: string; bg: string }> = {
   },
 };
 
-const PriorityIcon: React.FC<PriorityIconProps> = ({ priority, showLabel = false, size = "md" }) => {
+const PriorityIcon: React.FC<PriorityIconProps> = ({
+  priority,
+  showLabel = false,
+  size = "md",
+}) => {
   const { icon, color, bg } = config[priority] || config[Priority.MEDIUM];
   const sizeClass = size === "sm" ? "p-0.5 text-[12px]" : "p-1 text-[16px]";
 

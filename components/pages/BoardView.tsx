@@ -42,19 +42,13 @@ interface SortableCardProps {
 }
 
 const SortableCard: React.FC<SortableCardProps> = ({ task, assignee, onClick }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id, data: { task, status: task.status } });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { task, status: task.status },
+  });
 
   const style = {
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
     zIndex: isDragging ? 50 : undefined,
   };
@@ -67,12 +61,7 @@ const SortableCard: React.FC<SortableCardProps> = ({ task, assignee, onClick }) 
       {...listeners}
       className={isDragging ? "opacity-30" : ""}
     >
-      <TaskCard
-        task={task}
-        assignee={assignee}
-        onClick={onClick}
-        onDragStart={() => {}}
-      />
+      <TaskCard task={task} assignee={assignee} onClick={onClick} />
     </div>
   );
 };
@@ -99,42 +88,42 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col w-72 max-h-full rounded-lg transition-colors ${
+      className={`flex max-h-full w-72 flex-col rounded-lg transition-colors ${
         isOver
-          ? "bg-blue-50 dark:bg-blue-900/20 ring-2 ring-jira-blue ring-inset"
+          ? "bg-blue-50 ring-2 ring-inset ring-jira-blue dark:bg-blue-900/20"
           : "bg-gray-100 dark:bg-slate-800/60"
       }`}
     >
-      <div className="px-3 py-3 flex items-center justify-between sticky top-0 bg-inherit rounded-t-lg z-10">
+      <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-lg bg-inherit px-3 py-3">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-text-primary dark:text-slate-200 text-xs uppercase tracking-wide">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-primary dark:text-slate-200">
             {status}
           </h3>
-          <span className="bg-gray-200 dark:bg-slate-700 text-text-secondary dark:text-slate-400 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+          <span className="min-w-[20px] rounded-full bg-gray-200 px-1.5 py-0.5 text-center text-xs font-bold text-text-secondary dark:bg-slate-700 dark:text-slate-400">
             {taskCount}
           </span>
         </div>
         <button
           onClick={onCreateClick}
-          className="text-slate-400 hover:text-text-primary dark:hover:text-slate-200 p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+          className="rounded p-1 text-slate-400 transition-colors hover:bg-gray-200 hover:text-text-primary dark:hover:bg-slate-700 dark:hover:text-slate-200"
         >
           <span className="material-symbols-outlined text-lg">add</span>
         </button>
       </div>
 
-      <div className="px-2 pb-2 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
+      <div className="custom-scrollbar flex flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
         {children}
         {/* Empty column drop target */}
         {isEmpty && (
-          <div className="flex-1 min-h-[80px] flex items-center justify-center mx-1 mb-1 rounded-md border-2 border-dashed border-gray-300 dark:border-slate-600 transition-colors">
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+          <div className="mx-1 mb-1 flex min-h-[80px] flex-1 items-center justify-center rounded-md border-2 border-dashed border-gray-300 transition-colors dark:border-slate-600">
+            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
               Drop issues here
             </span>
           </div>
         )}
         <button
           onClick={onCreateClick}
-          className="py-1.5 flex items-center justify-center gap-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 text-sm font-medium transition-colors"
+          className="flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium text-slate-400 transition-colors hover:bg-gray-200 dark:text-slate-500 dark:hover:bg-slate-700"
         >
           <span className="material-symbols-outlined text-lg">add</span>
           <span>Create issue</span>
@@ -160,10 +149,8 @@ const BoardView: React.FC<BoardViewProps> = ({
 
   const getTasksByStatus = useCallback(
     (status: Status) =>
-      tasks
-        .filter((t) => t.status === status)
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    [tasks]
+      tasks.filter((t) => t.status === status).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [tasks],
   );
 
   const getUser = (id?: string) => users.find((u) => u.id === id);
@@ -171,7 +158,7 @@ const BoardView: React.FC<BoardViewProps> = ({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -209,7 +196,10 @@ const BoardView: React.FC<BoardViewProps> = ({
       const newIndex = columnTasks.findIndex((t) => t.id === overTask.id);
       if (oldIndex === -1 || newIndex === -1) return;
       const reordered = arrayMove(columnTasks, oldIndex, newIndex);
-      onReorder(task.status, reordered.map((t) => t.id));
+      onReorder(
+        task.status,
+        reordered.map((t) => t.id),
+      );
     } else {
       // Different column — insert at the over card's position
       const targetColumnTasks = getTasksByStatus(overTask.status);
@@ -224,29 +214,31 @@ const BoardView: React.FC<BoardViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Sprint Header */}
-      <div className="px-6 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+      <div className="flex shrink-0 flex-col justify-between gap-4 px-6 pb-4 md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-text-primary dark:text-white">{sprint.name}</h2>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${
+              className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
                 sprint.status === "active"
-                  ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
-                  : "bg-slate-100 text-slate-600 border-slate-200"
+                  ? "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                  : "border-slate-200 bg-slate-100 text-slate-600"
               }`}
             >
               {sprint.status}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {sprint.startDate} - {sprint.endDate}
             </span>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl truncate">{sprint.goal}</p>
+          <p className="mt-1 max-w-2xl truncate text-sm text-slate-500 dark:text-slate-400">
+            {sprint.goal}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex -space-x-2 mr-2">
+          <div className="mr-2 flex -space-x-2">
             {users.slice(0, 3).map((u) => (
               <img
                 key={u.id}
@@ -257,7 +249,7 @@ const BoardView: React.FC<BoardViewProps> = ({
               />
             ))}
             {users.length > 3 && (
-              <div className="size-8 rounded-full border-2 border-white dark:border-dark-bg bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xs text-slate-500 dark:text-slate-300 font-bold">
+              <div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-xs font-bold text-slate-500 dark:border-dark-bg dark:bg-slate-700 dark:text-slate-300">
                 +{users.length - 3}
               </div>
             )}
@@ -273,8 +265,8 @@ const BoardView: React.FC<BoardViewProps> = ({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2 px-6">
-          <div className="flex h-full gap-4 min-w-max">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-2">
+          <div className="flex h-full min-w-max gap-4">
             {columns.map((status) => {
               const columnTasks = getTasksByStatus(status);
               const taskIds = columnTasks.map((t) => t.id);
@@ -305,12 +297,11 @@ const BoardView: React.FC<BoardViewProps> = ({
 
         <DragOverlay dropAnimation={{ duration: 200, easing: "ease-out" }}>
           {activeTask ? (
-            <div className="rotate-2 opacity-95 w-72">
+            <div className="w-72 rotate-2 opacity-95">
               <TaskCard
                 task={activeTask}
                 assignee={getUser(activeTask.assigneeId)}
                 onClick={() => {}}
-                onDragStart={() => {}}
               />
             </div>
           ) : null}

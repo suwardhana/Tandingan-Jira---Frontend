@@ -52,11 +52,9 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
-      <div className="relative bg-white dark:bg-dark-surface w-full max-w-lg rounded-xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out] border border-gray-200 dark:border-dark-border">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Create Issue
-          </h2>
+      <div className="relative flex w-full max-w-lg animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-dark-border dark:bg-dark-surface">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-dark-border">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Issue</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -65,18 +63,15 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 space-y-4 overflow-y-auto max-h-[80vh]"
-        >
+        <form onSubmit={handleSubmit} className="max-h-[80vh] space-y-4 overflow-y-auto p-6">
           <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+            <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
               Issue Type
             </label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as IssueType)}
-              className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm"
+              className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 dark:border-dark-border dark:bg-dark-bg dark:text-white"
             >
               {Object.values(IssueType).map((t) => (
                 <option key={t} value={t}>
@@ -87,7 +82,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+            <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
               Summary <span className="text-red-500">*</span>
             </label>
             <input
@@ -96,12 +91,12 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What needs to be done?"
-              className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-bg dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+            <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
               Description
             </label>
             <textarea
@@ -109,19 +104,19 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a detailed description..."
-              className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-bg dark:text-white"
             ></textarea>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+              <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                 Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm"
+                className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 dark:border-dark-border dark:bg-dark-bg dark:text-white"
               >
                 {Object.values(Priority).map((p) => (
                   <option key={p} value={p}>
@@ -131,13 +126,13 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+              <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                 Assignee
               </label>
               <select
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm"
+                className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 dark:border-dark-border dark:bg-dark-bg dark:text-white"
               >
                 <option value="">Unassigned</option>
                 {users.map((u) => (
@@ -150,13 +145,13 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+            <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
               Sprint
             </label>
             <select
               value={sprintId}
               onChange={(e) => setSprintId(e.target.value)}
-              className="w-full rounded-lg bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-slate-900 dark:text-white text-sm"
+              className="w-full rounded-lg border-gray-200 bg-gray-50 text-sm text-slate-900 dark:border-dark-border dark:bg-dark-bg dark:text-white"
             >
               {sprints.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -166,17 +161,17 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
             </select>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-bold text-white bg-jira-blue hover:bg-jira-blue-hover rounded-lg shadow-lg shadow-blue-500/20 transition-colors"
+              className="rounded-lg bg-jira-blue px-4 py-2 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-jira-blue-hover"
             >
               Create Issue
             </button>
