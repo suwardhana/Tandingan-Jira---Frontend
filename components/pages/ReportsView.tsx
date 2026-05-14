@@ -62,7 +62,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ tasks, sprints }) => {
   ];
 
   return (
-    <div className="custom-scrollbar h-full space-y-6 overflow-y-auto px-6 pb-12">
+    <div className="custom-scrollbar h-full space-y-4 overflow-y-auto px-3 pb-12 sm:space-y-6 sm:px-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
           <div className="mb-4 flex items-center justify-between">

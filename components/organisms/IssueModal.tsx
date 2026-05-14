@@ -177,12 +177,12 @@ const IssueModal: React.FC<IssueModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center sm:p-4">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
-      <div className="relative flex max-h-[90vh] w-full max-w-4xl animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-dark-surface">
+      <div className="relative flex h-full max-h-full w-full animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden bg-white shadow-2xl dark:bg-dark-surface sm:max-h-[90vh] sm:max-w-4xl sm:rounded-xl">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-dark-border">
           <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
@@ -254,7 +254,7 @@ const IssueModal: React.FC<IssueModalProps> = ({
         <div className="custom-scrollbar flex-1 overflow-y-auto">
           <div className="grid min-h-full grid-cols-1 lg:grid-cols-12">
             {/* Main Content */}
-            <div className="space-y-8 border-b border-r border-gray-200 p-6 dark:border-dark-border lg:col-span-8 lg:border-b-0">
+            <div className="space-y-8 border-b border-gray-200 p-6 dark:border-dark-border lg:col-span-8 lg:border-b-0 lg:border-r">
               <div>
                 <div className="group relative">
                   <input

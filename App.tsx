@@ -36,6 +36,7 @@ const AppLayout: React.FC = () => {
   // ── UI-only state (not URL-derived) ──────────────────────────────────────
   const [isDark, setIsDark] = useState(true);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // ── Data state ───────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -327,6 +328,8 @@ const AppLayout: React.FC = () => {
         isDark={isDark}
         toggleTheme={toggleTheme}
         currentUser={currentUser}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -336,9 +339,10 @@ const AppLayout: React.FC = () => {
           sprints={sprints}
           currentSprintId={currentSprintId}
           onSprintChange={setCurrentSprintId}
+          onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
         />
 
-        <main className="flex-1 overflow-hidden pt-6">
+        <main className="flex-1 overflow-hidden pt-4 sm:pt-6">
           <ErrorBoundary key={viewKey}>
             <div className="h-full w-full">{renderContent()}</div>
           </ErrorBoundary>

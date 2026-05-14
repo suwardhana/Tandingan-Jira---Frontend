@@ -125,9 +125,9 @@ Stop and create a new goal if:
 - [ ] Sidebar matches Jira's blue navigation with active item indicator.
 - [ ] Tasks drag smoothly between Board columns at 60fps with visible drop indicators.
 - [ ] Keyboard users can move tasks between columns without a mouse.
-- [ ] Board layout is usable at 375px viewport width (stacked columns with horizontal scroll or wrap).
-- [ ] Sidebar collapses to icon-only at medium widths and overlay on mobile.
-- [ ] Modals are full-screen on mobile, centered sheets on desktop.
+- [x] Board layout is usable at 375px viewport width (stacked columns with horizontal scroll or wrap).
+- [x] Sidebar collapses to icon-only at medium widths and overlay on mobile.
+- [x] Modals are full-screen on mobile, centered sheets on desktop.
 - [ ] Lighthouse Performance score ≥90 on desktop.
 - [ ] No visible lag on interactions (drag, click, modal open/close).
 - [ ] `bun run build` succeeds with no TypeScript errors.

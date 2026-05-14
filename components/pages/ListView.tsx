@@ -15,28 +15,28 @@ const ListView: React.FC<ListViewProps> = ({ tasks, users, onTaskClick, onCreate
   const getUser = (id?: string) => users.find((u) => u.id === id);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden px-6 pb-20">
+    <div className="flex h-full flex-col overflow-hidden px-3 pb-20 sm:px-6">
       <div className="custom-scrollbar flex-1 overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-bg">
-        <table className="w-full border-collapse text-left">
+        <table className="w-full min-w-[640px] border-collapse text-left">
           <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-surface">
             <tr>
-              <th className="w-12 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"></th>
-              <th className="w-32 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="w-12 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"></th>
+              <th className="w-24 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:w-32 sm:px-4">
                 Key
               </th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:px-4">
                 Summary
               </th>
-              <th className="w-32 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="w-28 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:w-32 sm:px-4">
                 Status
               </th>
-              <th className="w-48 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="hidden w-40 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 md:table-cell">
                 Assignee
               </th>
-              <th className="w-32 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="hidden w-28 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:table-cell">
                 Priority
               </th>
-              <th className="w-32 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th className="w-24 px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 sm:w-32 sm:px-4">
                 Due Date
               </th>
             </tr>
@@ -50,25 +50,25 @@ const ListView: React.FC<ListViewProps> = ({ tasks, users, onTaskClick, onCreate
                   onClick={() => onTaskClick(task)}
                   className="group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-dark-surface/50"
                 >
-                  <td className="px-4 py-3 text-slate-400">
+                  <td className="px-3 py-3 text-slate-400 sm:px-4">
                     <span className="material-symbols-outlined text-[20px] opacity-0 group-hover:opacity-100">
                       drag_indicator
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 sm:px-4">
                     <span className="font-mono text-xs text-slate-500 group-hover:text-blue-500 dark:text-slate-400 dark:group-hover:text-blue-400">
                       {task.key}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="max-w-md truncate text-sm font-medium text-slate-900 dark:text-white">
+                  <td className="px-3 py-3 sm:px-4">
+                    <div className="max-w-[200px] truncate text-sm font-medium text-slate-900 dark:text-white sm:max-w-md">
                       {task.title}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 sm:px-4">
                     <StatusBadge status={task.status} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 md:table-cell">
                     <div className="flex items-center gap-2">
                       {assignee ? (
                         <>
@@ -82,10 +82,10 @@ const ListView: React.FC<ListViewProps> = ({ tasks, users, onTaskClick, onCreate
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 sm:table-cell">
                     <PriorityIcon priority={task.priority} showLabel />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-slate-500 dark:text-slate-400">
+                  <td className="whitespace-nowrap px-3 py-3 text-right text-sm text-slate-500 dark:text-slate-400 sm:px-4">
                     {task.dueDate || "-"}
                   </td>
                 </tr>

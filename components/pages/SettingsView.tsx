@@ -2,7 +2,7 @@ import React from "react";
 
 const SettingsView: React.FC = () => {
   return (
-    <div className="custom-scrollbar h-full max-w-4xl overflow-y-auto px-6 pb-6">
+    <div className="custom-scrollbar h-full max-w-4xl overflow-y-auto px-3 pb-6 sm:px-6">
       <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Project Settings</h2>
 
       <div className="space-y-6">

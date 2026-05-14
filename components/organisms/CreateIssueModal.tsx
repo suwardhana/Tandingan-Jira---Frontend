@@ -47,12 +47,12 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center sm:p-4">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       ></div>
-      <div className="relative flex w-full max-w-lg animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-dark-border dark:bg-dark-surface">
+      <div className="relative flex h-full max-h-full w-full animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden border-gray-200 bg-white shadow-2xl dark:border-dark-border dark:bg-dark-surface sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl sm:border">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-dark-border">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Issue</h2>
           <button
@@ -63,7 +63,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-h-[80vh] space-y-4 overflow-y-auto p-6">
+        <form onSubmit={handleSubmit} className="flex-1 space-y-4 overflow-y-auto p-6">
           <div>
             <label className="mb-1 block text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
               Issue Type

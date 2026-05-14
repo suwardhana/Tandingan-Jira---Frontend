@@ -88,7 +88,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex max-h-full w-72 flex-col rounded-lg transition-colors ${
+      className={`flex max-h-full w-[85vw] flex-none snap-center flex-col rounded-lg transition-colors sm:w-72 ${
         isOver
           ? "bg-blue-50 ring-2 ring-inset ring-jira-blue dark:bg-blue-900/20"
           : "bg-gray-100 dark:bg-slate-800/60"
@@ -216,10 +216,10 @@ const BoardView: React.FC<BoardViewProps> = ({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Sprint Header */}
-      <div className="flex shrink-0 flex-col justify-between gap-4 px-6 pb-4 md:flex-row md:items-center">
+      <div className="flex shrink-0 flex-col justify-between gap-3 px-3 pb-3 sm:px-6 sm:pb-4 md:flex-row md:items-center">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-text-primary dark:text-white">{sprint.name}</h2>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <h2 className="text-lg font-bold text-text-primary dark:text-white sm:text-xl">{sprint.name}</h2>
             <span
               className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
                 sprint.status === "active"
@@ -229,15 +229,15 @@ const BoardView: React.FC<BoardViewProps> = ({
             >
               {sprint.status}
             </span>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span className="hidden text-xs font-medium text-slate-500 dark:text-slate-400 sm:inline">
               {sprint.startDate} - {sprint.endDate}
             </span>
           </div>
-          <p className="mt-1 max-w-2xl truncate text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 max-w-2xl truncate text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
             {sprint.goal}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           <div className="mr-2 flex -space-x-2">
             {users.slice(0, 3).map((u) => (
               <img
@@ -265,8 +265,8 @@ const BoardView: React.FC<BoardViewProps> = ({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-2">
-          <div className="flex h-full min-w-max gap-4">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden px-3 pb-2 sm:px-6">
+          <div className="flex h-full min-w-max snap-x gap-3 sm:gap-4">
             {columns.map((status) => {
               const columnTasks = getTasksByStatus(status);
               const taskIds = columnTasks.map((t) => t.id);
@@ -297,7 +297,7 @@ const BoardView: React.FC<BoardViewProps> = ({
 
         <DragOverlay dropAnimation={{ duration: 200, easing: "ease-out" }}>
           {activeTask ? (
-            <div className="w-72 rotate-2 opacity-95">
+            <div className="w-[85vw] rotate-2 opacity-95 sm:w-72">
               <TaskCard
                 task={activeTask}
                 assignee={getUser(activeTask.assigneeId)}

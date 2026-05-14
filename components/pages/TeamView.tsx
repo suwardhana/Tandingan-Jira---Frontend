@@ -9,7 +9,7 @@ interface TeamViewProps {
 
 const TeamView: React.FC<TeamViewProps> = ({ users, onAddMemberClick }) => {
   return (
-    <div className="custom-scrollbar h-full overflow-y-auto px-6 pb-6">
+    <div className="custom-scrollbar h-full overflow-y-auto px-3 pb-6 sm:px-6">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Team Members</h2>
         <button
