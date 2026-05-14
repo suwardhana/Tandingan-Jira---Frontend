@@ -260,17 +260,16 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                     </h3>
 
                     {isEditingDescription ? (
-                      <div className="overflow-hidden rounded-lg border border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400">
-                        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-1.5 dark:border-dark-border dark:bg-dark-bg">
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Editing
-                          </span>
-                          <div className="flex items-center gap-2">
+                      <MarkdownEditor
+                        value={editDescription}
+                        onChange={setEditDescription}
+                        placeholder="Add a detailed description..."
+                        rows={10}
+                        headerRight={
+                          <>
                             <button
                               type="button"
-                              onClick={() => {
-                                setIsEditingDescription(false);
-                              }}
+                              onClick={() => setIsEditingDescription(false)}
                               className="rounded px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-gray-200 dark:text-slate-300 dark:hover:bg-slate-700"
                             >
                               Cancel
@@ -285,23 +284,11 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                             >
                               Save
                             </button>
-                          </div>
-                        </div>
-                        <MarkdownEditor
-                          value={editDescription}
-                          onChange={setEditDescription}
-                          placeholder="Add a detailed description..."
-                          rows={10}
-                        />
-                      </div>
+                          </>
+                        }
+                      />
                     ) : (
-                      <div
-                        className="group relative min-h-[80px] cursor-text rounded-lg border border-gray-200 p-4 transition-all hover:border-gray-300 dark:border-dark-border dark:hover:border-slate-600"
-                        onClick={() => {
-                          setEditDescription(task.description || "");
-                          setIsEditingDescription(true);
-                        }}
-                      >
+                      <div className="group relative min-h-[80px] rounded-lg border border-gray-200 p-4 transition-all dark:border-dark-border">
                         {task.description ? (
                           <div
                             className="prose prose-sm dark:prose-invert max-w-none text-sm"
@@ -317,8 +304,7 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                         <button
                           type="button"
                           className="absolute right-3 top-3 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-600 opacity-0 shadow-sm ring-1 ring-gray-300 transition-all hover:bg-gray-50 group-hover:opacity-100 dark:bg-dark-surface dark:text-slate-300 dark:ring-slate-600 dark:hover:bg-slate-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             setEditDescription(task.description || "");
                             setIsEditingDescription(true);
                           }}

@@ -6,6 +6,7 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   rows?: number;
+  headerRight?: React.ReactNode;
 }
 
 type ToolbarAction = {
@@ -16,12 +17,9 @@ type ToolbarAction = {
 };
 
 const TOOLBAR_ACTIONS: ToolbarAction[] = [
-  { icon: "format_h1", title: "Add heading", prefix: "\n## ", suffix: "" },
   { icon: "format_bold", title: "Add bold text", prefix: "**", suffix: "**" },
   { icon: "format_italic", title: "Add italic text", prefix: "_", suffix: "_" },
-  { icon: "format_quote", title: "Add a quote", prefix: "\n> ", suffix: "" },
-  { icon: "code", title: "Add code", prefix: "`", suffix: "`" },
-  { icon: "link", title: "Add a link", prefix: "[", suffix: "](url)" },
+  { icon: "code_blocks", title: "Add code block", prefix: "\n```\n", suffix: "\n```\n" },
   { icon: "format_list_bulleted", title: "Add a bulleted list", prefix: "\n- ", suffix: "" },
   { icon: "format_list_numbered", title: "Add a numbered list", prefix: "\n1. ", suffix: "" },
   { icon: "checklist", title: "Add a task list", prefix: "\n- [ ] ", suffix: "" },
@@ -38,10 +36,14 @@ function insertMarkdown(
   textarea.focus();
   document.execCommand("insertText", false, replacement);
 
-  // If no text was selected, move cursor inside the inserted markup
   if (selectionStart === selectionEnd) {
-    const cursorPos = selectionStart + prefix.length;
-    textarea.setSelectionRange(cursorPos, cursorPos);
+    // For multi-line blocks (like code blocks), place cursor between prefix and suffix
+    const innerStart = selectionStart + prefix.length;
+    textarea.setSelectionRange(innerStart, innerStart + selectedText.length);
+  } else {
+    // After wrapping selected text, select the whole result for easy adjustment
+    const newStart = selectionStart + prefix.length;
+    textarea.setSelectionRange(newStart, newStart + selectedText.length);
   }
 }
 
@@ -50,6 +52,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   onChange,
   placeholder = "Write something...",
   rows = 8,
+  headerRight,
 }) => {
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -118,7 +121,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 dark:border-dark-border">
-      {/* Write / Preview Tabs */}
+      {/* Write / Preview Tabs + optional right actions */}
       <div className="flex items-center border-b border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-bg">
         <button
           type="button"
@@ -142,6 +145,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         >
           Preview
         </button>
+        {headerRight && (
+          <div className="ml-auto flex items-center gap-2 pr-2">{headerRight}</div>
+        )}
       </div>
 
       {/* Toolbar (Write mode only) */}
