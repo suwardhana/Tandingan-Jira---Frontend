@@ -224,6 +224,70 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                 {task.key}
               </span>
             </div>
+
+            {/* Status breadcrumb */}
+            <div className="flex items-center gap-0">
+              {[Status.TODO, Status.IN_PROGRESS, Status.REVIEW, Status.DONE].map(
+                (s, i) => {
+                  const statusOrder = [
+                    Status.TODO,
+                    Status.IN_PROGRESS,
+                    Status.REVIEW,
+                    Status.DONE,
+                  ];
+                  const currentIdx = statusOrder.indexOf(task.status);
+                  const stepIdx = statusOrder.indexOf(s);
+                  const isCompleted = stepIdx <= currentIdx;
+                  const isDone = task.status === Status.DONE;
+
+                  return (
+                    <React.Fragment key={s}>
+                      {i > 0 && (
+                        <div
+                          className={`mx-0.5 h-px w-4 ${
+                            stepIdx <= currentIdx
+                              ? isDone
+                                ? "bg-green-500"
+                                : "bg-blue-500"
+                              : "bg-gray-300 dark:bg-slate-600"
+                          }`}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Clicking the current step unchecks (moves to previous), except To Do
+                          if (s === task.status && s !== Status.TODO) {
+                            const prev = statusOrder[stepIdx - 1];
+                            onUpdateTask(task.id, { status: prev });
+                          } else {
+                            onUpdateTask(task.id, { status: s });
+                          }
+                        }}
+                        className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-all ${
+                          isCompleted
+                            ? isDone
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-blue-600 dark:text-blue-400"
+                            : "text-slate-400 dark:text-slate-500"
+                        } hover:bg-gray-100 dark:hover:bg-slate-700/50`}
+                        title={s}
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[16px] ${
+                            isCompleted ? "fill-icon" : ""
+                          }`}
+                        >
+                          {isCompleted ? "check_circle" : "circle"}
+                        </span>
+                        <span className="hidden sm:inline">{s}</span>
+                      </button>
+                    </React.Fragment>
+                  );
+                },
+              )}
+            </div>
+
             <div className="flex items-center gap-2">
               <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700/50 dark:hover:text-slate-200">
                 <span className="material-symbols-outlined">more_horiz</span>
@@ -288,7 +352,7 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                         }
                       />
                     ) : (
-                      <div className="group relative min-h-[80px] rounded-lg border border-gray-200 p-4 transition-all dark:border-dark-border">
+                      <div className="group relative min-h-[80px] rounded-lg p-4 transition-all dark:border-dark-border">
                         {task.description ? (
                           <div
                             className="prose prose-sm dark:prose-invert max-w-none text-sm"
@@ -536,23 +600,6 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
 
               {/* Sidebar Info */}
               <div className="space-y-6 bg-gray-50/50 p-6 dark:bg-dark-bg/20 lg:col-span-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Status
-                  </label>
-                  <select
-                    value={task.status}
-                    onChange={(e) => onUpdateTask(task.id, { status: e.target.value as Status })}
-                    className="w-full rounded-lg border-gray-200 bg-white text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-blue-500 dark:border-dark-border dark:bg-dark-surface dark:text-white"
-                  >
-                    {Object.values(Status).map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div className="space-y-4">
                   <h3 className="border-b border-gray-200 pb-2 text-sm font-bold text-slate-900 dark:border-dark-border dark:text-white">
                     Details
