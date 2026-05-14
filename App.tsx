@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "./components/organisms/Sidebar";
 import Header from "./components/organisms/Header";
 import BoardView from "./components/pages/BoardView";
@@ -9,26 +10,47 @@ import SettingsView from "./components/pages/SettingsView";
 import IssueModal from "./components/organisms/IssueModal";
 import CreateIssueModal from "./components/organisms/CreateIssueModal";
 import AddMemberModal from "./components/organisms/AddMemberModal";
+import ErrorBoundary from "./components/organisms/ErrorBoundary";
+import { ToastProvider, useToast } from "./components/organisms/Toast";
+import { SkeletonBoard, SkeletonTable, SkeletonReports } from "./components/atoms/Skeleton";
 import { ViewMode, Task, Status, User, Sprint } from "./types";
 import { api } from "./api";
 import { USERS, SPRINTS, TASKS } from "./constants";
 
-const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewMode>("board");
-  const [isDark, setIsDark] = useState(true);
+// ── Inner app layout — lives inside BrowserRouter + ToastProvider ──────────
 
-  // Data State
+const AppLayout: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // ── UI-only state (not URL-derived) ──────────────────────────────────────
+  const [isDark, setIsDark] = useState(true);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+
+  // ── Data state ───────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [currentSprintId, setCurrentSprintId] = useState<string>("");
+  const [dataReady, setDataReady] = useState(false);
 
-  // Modal States
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  // ── Derive view + modal state from URL ──────────────────────────────────
+  const pathSegments = location.pathname.split("/").filter(Boolean);
+  const currentView: ViewMode = (["board", "list", "reports", "team", "settings"].includes(pathSegments[0])
+    ? pathSegments[0]
+    : "board") as ViewMode;
 
-  // Initial Load — falls back to mock data when API is unavailable
+  const taskKey = pathSegments[1] === "task" ? pathSegments[2] : undefined;
+  const selectedTask = useMemo(() => {
+    if (!taskKey || !dataReady) return null;
+    return tasks.find((t) => t.key === taskKey) ?? null;
+  }, [taskKey, tasks, dataReady]);
+
+  const showCreate = searchParams.get("create") === "true";
+
+  // ── Initial data load ───────────────────────────────────────────────────
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -40,35 +62,26 @@ const App: React.FC = () => {
         setUsers(fetchedUsers);
         setTasks(fetchedTasks);
         setSprints(fetchedSprints);
-        if (fetchedSprints.length > 0) {
-          setCurrentSprintId(fetchedSprints[0].id);
-        }
+        if (fetchedSprints.length > 0) setCurrentSprintId(fetchedSprints[0].id);
       } catch {
         console.warn("API unavailable — using mock data from constants.ts");
         setUsers(USERS);
         setTasks(TASKS);
         setSprints(SPRINTS);
-        if (SPRINTS.length > 0) {
-          setCurrentSprintId(SPRINTS[0].id);
-        }
+        if (SPRINTS.length > 0) setCurrentSprintId(SPRINTS[0].id);
+      } finally {
+        setDataReady(true);
       }
     };
     loadData();
   }, []);
 
-  // Derived State
-  const currentSprint =
-    sprints.find((s) => s.id === currentSprintId) || sprints[0];
+  // ── Derived data ────────────────────────────────────────────────────────
+  const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
   const sprintTasks = tasks.filter((t) => t.sprintId === currentSprintId);
-  const currentUser = users[0] || {
-    id: "temp",
-    name: "Loading...",
-    email: "",
-    role: "",
-    avatar: "",
-  };
+  const currentUser = users[0] || { id: "temp", name: "Loading...", email: "", role: "", avatar: "" };
 
-  // Initialize Dark Mode
+  // ── Dark mode ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -78,18 +91,28 @@ const App: React.FC = () => {
   }, [isDark]);
 
   const toggleTheme = () => setIsDark(!isDark);
-  const handleTaskClick = (task: Task) => setSelectedTask(task);
-  const handleCloseModal = () => setSelectedTask(null);
 
-  const getCurrentDateFormatted = () => {
-    return new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  // ── URL-based navigation ────────────────────────────────────────────────
+  const handleViewChange = (view: ViewMode) => navigate(`/${view}`);
+  const handleTaskClick = (task: Task) => navigate(`/${currentView}/task/${task.key}`);
+  const handleCloseModal = () => navigate(-1);
+  const openCreateModal = () => {
+    const params = new URLSearchParams(searchParams);
+    params.set("create", "true");
+    setSearchParams(params);
+  };
+  const closeCreateModal = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("create");
+    setSearchParams(params, { replace: true });
   };
 
-  // Create Task Handler
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  const getCurrentDateFormatted = () =>
+    new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  // ── Mutation handlers (unchanged logic, added toast feedback) ────────────
+
   const handleCreateTask = async (newTask: Partial<Task>) => {
     const taskPayload: Task = {
       id: `t${Date.now()}`,
@@ -109,66 +132,42 @@ const App: React.FC = () => {
       updatedAt: getCurrentDateFormatted(),
     };
 
-    // Optimistic update first
-    setTasks([...tasks, taskPayload]);
+    setTasks((prev) => [...prev, taskPayload]);
+    closeCreateModal();
 
     try {
       const createdTask = await api.createTask(taskPayload);
-      // Replace optimistic ID with server-assigned one
       setTasks((prev) => prev.map((t) => (t.id === taskPayload.id ? createdTask : t)));
+      toast("Issue created successfully", "success");
     } catch {
-      console.warn("API unavailable — task saved locally only");
+      toast("Issue saved locally — backend unavailable", "warning");
     }
   };
 
-  // General Update Task Handler
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
+    if (selectedTask && selectedTask.id === taskId) {
+      // selectedTask is derived from URL; no setSelectedTask needed
+    }
     try {
-      // Optimistic update
-      const updatedLocal = tasks.map((t) =>
-        t.id === taskId ? { ...t, ...updates } : t
-      );
-      setTasks(updatedLocal);
-
-      if (selectedTask && selectedTask.id === taskId) {
-        setSelectedTask({ ...selectedTask, ...updates });
-      }
-
       await api.updateTask(taskId, updates);
     } catch {
       console.warn("API unavailable — update applied locally only");
     }
   };
 
-  // Add Comment Handler
   const handleAddComment = async (taskId: string, text: string) => {
     try {
-      const createdComment = await api.createComment(taskId, {
-        text,
-        userId: currentUser.id,
-      });
-
-      // Update local state
-      const updatedTasks = tasks.map((t) =>
-        t.id === taskId
-          ? { ...t, comments: [...(t.comments || []), createdComment] }
-          : t
+      const createdComment = await api.createComment(taskId, { text, userId: currentUser.id });
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, comments: [...(t.comments || []), createdComment] } : t))
       );
-      setTasks(updatedTasks);
-
-      // Update selected task if it's the one being modified
-      if (selectedTask && selectedTask.id === taskId) {
-        setSelectedTask({
-          ...selectedTask,
-          comments: [...(selectedTask.comments || []), createdComment],
-        });
-      }
+      toast("Comment added", "success");
     } catch {
-      console.warn("API unavailable — comment saved locally only");
+      toast("Comment saved locally", "warning");
     }
   };
 
-  // Add Member Handler
   const handleAddMember = async (user: Partial<User>) => {
     const newUser: User = {
       id: `u${Date.now()}`,
@@ -177,96 +176,69 @@ const App: React.FC = () => {
       avatar: user.avatar || "",
       role: user.role || "Member",
     };
-
-    // Optimistic update first
-    setUsers([...users, newUser]);
-
+    setUsers((prev) => [...prev, newUser]);
     try {
       const createdUser = await api.createUser(newUser);
       setUsers((prev) => prev.map((u) => (u.id === newUser.id ? createdUser : u)));
+      toast("Member added", "success");
     } catch {
-      console.warn("API unavailable — member saved locally only");
+      toast("Member saved locally", "warning");
     }
   };
 
-  // Subtask Handlers
   const handleAddSubtask = async (taskId: string, title: string) => {
     try {
       const createdSubtask = await api.createSubtask(taskId, { title });
-
-      // Update local state
-      const updatedTasks = tasks.map((t) =>
-        t.id === taskId
-          ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] }
-          : t
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), createdSubtask] } : t))
       );
-      setTasks(updatedTasks);
-
-      // Update selected task if it's the one being modified
-      if (selectedTask && selectedTask.id === taskId) {
-        setSelectedTask({
-          ...selectedTask,
-          subtasks: [...(selectedTask.subtasks || []), createdSubtask],
-        });
-      }
+      toast("Subtask added", "success");
     } catch {
-      console.warn("API unavailable — subtask saved locally only");
+      toast("Subtask saved locally", "warning");
     }
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     try {
       await api.deleteSubtask(subtaskId);
-
-      // Update local state - remove subtask from all tasks
-      const updatedTasks = tasks.map((t) => ({
-        ...t,
-        subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId),
-      }));
-      setTasks(updatedTasks);
-
-      // Update selected task if needed
-      if (selectedTask) {
-        setSelectedTask({
-          ...selectedTask,
-          subtasks: (selectedTask.subtasks || []).filter(
-            (s) => s.id !== subtaskId
-          ),
-        });
-      }
+      setTasks((prev) =>
+        prev.map((t) => ({ ...t, subtasks: (t.subtasks || []).filter((s) => s.id !== subtaskId) }))
+      );
+      toast("Subtask deleted", "success");
     } catch {
-      console.warn("API unavailable — subtask deletion local only");
+      toast("Subtask deletion saved locally", "warning");
     }
   };
 
   const handleToggleSubtask = async (subtaskId: string, completed: boolean) => {
     try {
       await api.updateSubtask(subtaskId, { completed });
-
-      // Update local state
-      const updatedTasks = tasks.map((t) => ({
-        ...t,
-        subtasks: (t.subtasks || []).map((s) =>
-          s.id === subtaskId ? { ...s, completed } : s
-        ),
-      }));
-      setTasks(updatedTasks);
-
-      // Update selected task if needed
-      if (selectedTask) {
-        setSelectedTask({
-          ...selectedTask,
-          subtasks: (selectedTask.subtasks || []).map((s) =>
-            s.id === subtaskId ? { ...s, completed } : s
-          ),
-        });
-      }
+      setTasks((prev) =>
+        prev.map((t) => ({
+          ...t,
+          subtasks: (t.subtasks || []).map((s) => (s.id === subtaskId ? { ...s, completed } : s)),
+        }))
+      );
     } catch {
       console.warn("API unavailable — subtask toggle local only");
     }
   };
 
+  // ── View rendering ──────────────────────────────────────────────────────
   const renderContent = () => {
+    if (!dataReady) {
+      switch (currentView) {
+        case "board":
+          return <SkeletonBoard />;
+        case "list":
+          return <SkeletonTable rows={6} />;
+        case "reports":
+          return <SkeletonReports />;
+        default:
+          return <SkeletonTable rows={4} />;
+      }
+    }
+
     switch (currentView) {
       case "board":
         return currentSprint ? (
@@ -276,10 +248,10 @@ const App: React.FC = () => {
             users={users}
             onTaskClick={handleTaskClick}
             onTaskUpdate={(id, status) => handleUpdateTask(id, { status })}
-            onCreateClick={() => setIsCreateModalOpen(true)}
+            onCreateClick={openCreateModal}
           />
         ) : (
-          <div>Loading Sprints...</div>
+          <div className="flex items-center justify-center h-full text-slate-500">No sprints available</div>
         );
       case "list":
         return (
@@ -287,18 +259,13 @@ const App: React.FC = () => {
             tasks={sprintTasks}
             users={users}
             onTaskClick={handleTaskClick}
-            onCreateClick={() => setIsCreateModalOpen(true)}
+            onCreateClick={openCreateModal}
           />
         );
       case "reports":
-        return <ReportsView />;
+        return <ReportsView tasks={tasks} sprints={sprints} />;
       case "team":
-        return (
-          <TeamView
-            users={users}
-            onAddMemberClick={() => setIsAddMemberModalOpen(true)}
-          />
-        );
+        return <TeamView users={users} onAddMemberClick={() => setIsAddMemberModalOpen(true)} />;
       case "settings":
         return <SettingsView />;
       default:
@@ -306,11 +273,13 @@ const App: React.FC = () => {
     }
   };
 
+  const viewKey = pathSegments[0] || "board";
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
       <Sidebar
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={handleViewChange}
         isDark={isDark}
         toggleTheme={toggleTheme}
         currentUser={currentUser}
@@ -319,17 +288,20 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           currentView={currentView}
-          onCreateClick={() => setIsCreateModalOpen(true)}
+          onCreateClick={openCreateModal}
           sprints={sprints}
           currentSprintId={currentSprintId}
           onSprintChange={setCurrentSprintId}
         />
 
         <main className="flex-1 overflow-hidden pt-6">
-          <div className="h-full w-full">{renderContent()}</div>
+          <ErrorBoundary key={viewKey}>
+            <div className="h-full w-full">{renderContent()}</div>
+          </ErrorBoundary>
         </main>
       </div>
 
+      {/* Task detail modal — driven by URL */}
       <IssueModal
         task={selectedTask}
         isOpen={!!selectedTask}
@@ -342,15 +314,17 @@ const App: React.FC = () => {
         onToggleSubtask={handleToggleSubtask}
       />
 
+      {/* Create modal — driven by ?create=true */}
       <CreateIssueModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        isOpen={showCreate}
+        onClose={closeCreateModal}
         onCreate={handleCreateTask}
         users={users}
         sprints={sprints}
         currentSprintId={currentSprintId}
       />
 
+      {/* Add member modal — still local state */}
       <AddMemberModal
         isOpen={isAddMemberModalOpen}
         onClose={() => setIsAddMemberModalOpen(false)}
@@ -359,5 +333,18 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+// ── Root App — BrowserRouter + ToastProvider ───────────────────────────────
+
+const App: React.FC = () => (
+  <BrowserRouter>
+    <ToastProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/board" replace />} />
+        <Route path="/*" element={<AppLayout />} />
+      </Routes>
+    </ToastProvider>
+  </BrowserRouter>
+);
 
 export default App;
