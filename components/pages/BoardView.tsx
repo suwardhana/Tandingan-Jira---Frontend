@@ -11,7 +11,6 @@ import {
   useDroppable,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -85,7 +84,6 @@ interface DroppableColumnProps {
   children: React.ReactNode;
   taskCount: number;
   isEmpty: boolean;
-  isActiveTarget: boolean;
   onCreateClick: () => void;
 }
 
@@ -94,7 +92,6 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   children,
   taskCount,
   isEmpty,
-  isActiveTarget,
   onCreateClick,
 }) => {
   const { isOver, setNodeRef } = useDroppable({ id: status, data: { status } });
@@ -102,8 +99,8 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col w-72 max-h-full rounded-lg transition-all duration-200 ${
-        isOver || isActiveTarget
+      className={`flex flex-col w-72 max-h-full rounded-lg transition-colors ${
+        isOver
           ? "bg-blue-50 dark:bg-blue-900/20 ring-2 ring-jira-blue ring-inset"
           : "bg-gray-100 dark:bg-slate-800/60"
       }`}
@@ -160,7 +157,6 @@ const BoardView: React.FC<BoardViewProps> = ({
 }) => {
   const columns = Object.values(Status);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [closestColumn, setClosestColumn] = useState<Status | null>(null);
 
   const getTasksByStatus = useCallback(
     (status: Status) =>
@@ -183,28 +179,8 @@ const BoardView: React.FC<BoardViewProps> = ({
     if (task) setActiveTask(task);
   };
 
-  // Track which column the drag is over for between-column animation
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event;
-    if (!over) {
-      setClosestColumn(null);
-      return;
-    }
-    // Over a column droppable
-    if (Object.values(Status).includes(over.id as Status)) {
-      setClosestColumn(over.id as Status);
-      return;
-    }
-    // Over a card — find its column
-    const overTask = tasks.find((t) => t.id === over.id);
-    if (overTask) {
-      setClosestColumn(overTask.status);
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTask(null);
-    setClosestColumn(null);
     const { active, over } = event;
     if (!over) return;
 
@@ -245,7 +221,6 @@ const BoardView: React.FC<BoardViewProps> = ({
 
   const handleDragCancel = () => {
     setActiveTask(null);
-    setClosestColumn(null);
   };
 
   return (
@@ -295,7 +270,6 @@ const BoardView: React.FC<BoardViewProps> = ({
         sensors={sensors}
         collisionDetection={rectIntersection}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
@@ -305,22 +279,15 @@ const BoardView: React.FC<BoardViewProps> = ({
               const columnTasks = getTasksByStatus(status);
               const taskIds = columnTasks.map((t) => t.id);
 
-              // For between-column animation: temporarily include the
-              // active task in the target column's SortableContext so
-              // cards slide apart to make room.
-              const isTarget = closestColumn === status && activeTask && activeTask.status !== status;
-              const sortableIds = isTarget ? [...taskIds, activeTask!.id] : taskIds;
-
               return (
                 <DroppableColumn
                   key={status}
                   status={status}
                   taskCount={columnTasks.length}
                   isEmpty={columnTasks.length === 0}
-                  isActiveTarget={isTarget}
                   onCreateClick={onCreateClick}
                 >
-                  <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
                     {columnTasks.map((task) => (
                       <SortableCard
                         key={task.id}
