@@ -97,13 +97,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
         setUsers(fetchedUsers);
         setTasks(fetchedTasks);
         setSprints(fetchedSprints);
-        if (fetchedSprints.length > 0) setCurrentSprintId(fetchedSprints[0].id);
+        if (fetchedSprints.length > 0)
+          setCurrentSprintId(
+            fetchedSprints.find((s) => s.status === "active")?.id || fetchedSprints[0].id,
+          );
       } catch {
         console.warn("API unavailable — using mock data from constants.ts");
         setUsers(USERS);
         setTasks(TASKS);
         setSprints(SPRINTS);
-        if (SPRINTS.length > 0) setCurrentSprintId(SPRINTS[0].id);
+        if (SPRINTS.length > 0)
+          setCurrentSprintId(SPRINTS.find((s) => s.status === "active")?.id || SPRINTS[0].id);
       } finally {
         setDataReady(true);
       }
