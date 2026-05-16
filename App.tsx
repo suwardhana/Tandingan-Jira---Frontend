@@ -11,6 +11,7 @@ import {
 import Sidebar from "./components/organisms/Sidebar";
 import Header from "./components/organisms/Header";
 import BoardView from "./components/pages/BoardView";
+import BacklogView from "./components/pages/BacklogView";
 import ListView from "./components/pages/ListView";
 import ReportsView from "./components/pages/ReportsView";
 import TeamView from "./components/pages/TeamView";
@@ -22,7 +23,7 @@ import AddMemberModal from "./components/organisms/AddMemberModal";
 import ErrorBoundary from "./components/organisms/ErrorBoundary";
 import { ToastProvider, useToast } from "./components/organisms/Toast";
 import { SkeletonBoard, SkeletonTable, SkeletonReports } from "./components/atoms/Skeleton";
-import { ViewMode, Task, Status, User, Sprint } from "./types";
+import { ViewMode, Task, Status, Priority, IssueType, User, Sprint } from "./types";
 import { api } from "./api";
 import { USERS, SPRINTS, TASKS } from "./constants";
 
@@ -61,6 +62,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterAssigneeId, setFilterAssigneeId] = useState<string | null>(null);
   const [showMyTasksOnly, setShowMyTasksOnly] = useState(false);
+  const [createSprintId, setCreateSprintId] = useState<string | null>(null);
 
   // ── Data state ───────────────────────────────────────────────────────────
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -72,7 +74,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
   // ── Derive view + modal state from URL ──────────────────────────────────
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const currentView: ViewMode = (
-    ["board", "list", "reports", "team", "settings"].includes(pathSegments[0])
+    ["board", "backlog", "list", "reports", "team", "settings"].includes(pathSegments[0])
       ? pathSegments[0]
       : "board"
   ) as ViewMode;
@@ -154,12 +156,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
     [navigate, currentView],
   );
   const handleCloseModal = useCallback(() => navigate(-1), [navigate]);
-  const openCreateModal = useCallback(() => {
+  const openCreateModal = useCallback((sprintId?: string) => {
+    if (sprintId) setCreateSprintId(sprintId);
     const params = new URLSearchParams(searchParams);
     params.set("create", "true");
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
   const closeCreateModal = useCallback(() => {
+    setCreateSprintId(null);
     const params = new URLSearchParams(searchParams);
     params.delete("create");
     setSearchParams(params, { replace: true });
@@ -197,15 +201,52 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
       });
       closeCreateModal();
 
+      const tempId = taskPayload!.id;
       try {
         const createdTask = await api.createTask(taskPayload!);
-        setTasks((prev) => prev.map((t) => (t.id === taskPayload!.id ? createdTask : t)));
+        setTasks((prev) => prev.map((t) => (t.id === tempId ? createdTask : t)));
         toast("Issue created successfully", "success");
       } catch {
         toast("Issue saved locally — backend unavailable", "warning");
       }
     },
     [closeCreateModal, toast, currentSprintId, currentUser.id],
+  );
+
+  const handleQuickCreate = useCallback(
+    async (title: string, sprintId?: string) => {
+      let taskPayload: Task;
+      setTasks((prev) => {
+        taskPayload = {
+          id: `t${Date.now()}`,
+          key: `PROJ-${100 + prev.length + 1}`,
+          title,
+          description: "",
+          status: Status.TODO,
+          priority: Priority.MEDIUM as any,
+          type: IssueType.TASK as any,
+          assigneeId: undefined,
+          reporterId: currentUser.id,
+          sprintId: sprintId,
+          labels: [],
+          comments: [],
+          order: prev.filter((t) => t.status === Status.TODO).length + 1,
+          createdAt: getCurrentDateFormatted(),
+          updatedAt: getCurrentDateFormatted(),
+        };
+        return [...prev, taskPayload];
+      });
+
+      const tempId = taskPayload!.id;
+      try {
+        const createdTask = await api.createTask(taskPayload!);
+        setTasks((prev) => prev.map((t) => (t.id === tempId ? createdTask : t)));
+        toast("Issue created", "success");
+      } catch {
+        toast("Issue saved locally", "warning");
+      }
+    },
+    [toast, currentUser.id],
   );
 
   const handleUpdateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
@@ -405,14 +446,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
 
   const handleStartSprint = useCallback(
     async (sprintId: string) => {
-      setSprints((prev) =>
-        prev.map((s) => (s.id === sprintId ? { ...s, status: "active" as const } : s)),
-      );
+      let previousStatus: string | undefined;
+      setSprints((prev) => {
+        const sprint = prev.find((s) => s.id === sprintId);
+        previousStatus = sprint?.status;
+        return prev.map((s) => (s.id === sprintId ? { ...s, status: "active" as const } : s));
+      });
       try {
         await api.updateSprint(sprintId, { status: "active" as const });
         toast("Sprint started", "success");
       } catch {
-        toast("Sprint start saved locally", "warning");
+        setSprints((prev) =>
+          prev.map((s) =>
+            s.id === sprintId && previousStatus ? { ...s, status: previousStatus as Sprint["status"] } : s,
+          ),
+        );
+        toast("Failed to start sprint", "error");
       }
     },
     [toast],
@@ -420,14 +469,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
 
   const handleCompleteSprint = useCallback(
     async (sprintId: string) => {
-      setSprints((prev) =>
-        prev.map((s) => (s.id === sprintId ? { ...s, status: "closed" as const } : s)),
-      );
+      let previousStatus: string | undefined;
+      setSprints((prev) => {
+        const sprint = prev.find((s) => s.id === sprintId);
+        previousStatus = sprint?.status;
+        return prev.map((s) => (s.id === sprintId ? { ...s, status: "closed" as const } : s));
+      });
       try {
         await api.updateSprint(sprintId, { status: "closed" as const });
         toast("Sprint completed", "success");
       } catch {
-        toast("Sprint completed locally", "warning");
+        setSprints((prev) =>
+          prev.map((s) =>
+            s.id === sprintId && previousStatus ? { ...s, status: previousStatus as Sprint["status"] } : s,
+          ),
+        );
+        toast("Failed to complete sprint", "error");
       }
     },
     [toast],
@@ -469,6 +526,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
           <div className="flex h-full items-center justify-center text-slate-500">
             No sprints available
           </div>
+        );
+      case "backlog":
+        return (
+          <BacklogView
+            tasks={tasks}
+            sprints={sprints}
+            users={users}
+            onTaskClick={handleTaskClick}
+            onTaskUpdate={handleUpdateTask}
+            onStartSprint={handleStartSprint}
+            onCompleteSprint={handleCompleteSprint}
+            searchQuery={searchQuery}
+            onCreateForSprint={(sprintId) => openCreateModal(sprintId)}
+            onQuickCreate={handleQuickCreate}
+          />
         );
       case "list":
         return (
@@ -552,7 +624,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
         onCreate={handleCreateTask}
         users={users}
         sprints={sprints}
-        currentSprintId={currentSprintId}
+        currentSprintId={createSprintId ?? currentSprintId}
       />
 
       {/* Add member modal — still local state */}

@@ -16,6 +16,7 @@ interface SidebarProps {
 const navItems: { id: ViewMode; icon: string; label: string }[] = [
   { id: "board", icon: "view_kanban", label: "Board" },
   { id: "list", icon: "format_list_bulleted", label: "List" },
+  { id: "backlog", icon: "inventory_2", label: "Backlog" },
   { id: "reports", icon: "bar_chart", label: "Reports" },
   { id: "team", icon: "group", label: "Team" },
   { id: "settings", icon: "settings", label: "Settings" },

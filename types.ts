@@ -72,4 +72,4 @@ export interface Task {
   attachments?: { name: string; size: string; type: "pdf" | "image" | "other" }[];
 }
 
-export type ViewMode = "board" | "list" | "reports" | "team" | "settings";
+export type ViewMode = "board" | "backlog" | "list" | "reports" | "team" | "settings";
