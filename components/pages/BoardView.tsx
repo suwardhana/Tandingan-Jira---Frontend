@@ -312,13 +312,13 @@ const BoardView: React.FC<BoardViewProps> = ({
 
         {/* Filter bar */}
         <div className="flex items-center gap-2 border-t border-gray-200 pt-2 dark:border-dark-border">
-          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">Filter</span>
+          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+            Filter
+          </span>
           {users.map((u) => (
             <button
               key={u.id}
-              onClick={() =>
-                onFilterAssignee(filterAssigneeId === u.id ? null : u.id)
-              }
+              onClick={() => onFilterAssignee(filterAssigneeId === u.id ? null : u.id)}
               className={`shrink-0 rounded-full transition-all hover:ring-2 hover:ring-jira-blue/50 ${
                 filterAssigneeId === u.id ? "ring-2 ring-jira-blue" : "opacity-60 hover:opacity-100"
               }`}

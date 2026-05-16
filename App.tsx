@@ -15,6 +15,7 @@ import ListView from "./components/pages/ListView";
 import ReportsView from "./components/pages/ReportsView";
 import TeamView from "./components/pages/TeamView";
 import SettingsView from "./components/pages/SettingsView";
+import LoginPage from "./components/pages/LoginPage";
 import IssueModal from "./components/organisms/IssueModal";
 import CreateIssueModal from "./components/organisms/CreateIssueModal";
 import AddMemberModal from "./components/organisms/AddMemberModal";
@@ -25,9 +26,29 @@ import { ViewMode, Task, Status, User, Sprint } from "./types";
 import { api } from "./api";
 import { USERS, SPRINTS, TASKS } from "./constants";
 
-// ── Inner app layout — lives inside BrowserRouter + ToastProvider ──────────
+// ── Auth splash shown while checking session ──────────────────────────────
 
-const AppLayout: React.FC = () => {
+const LoginSplash: React.FC = () => (
+  <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-dark-bg">
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex size-12 items-center justify-center rounded-xl bg-jira-blue text-xl font-bold text-white">
+        T
+      </div>
+      <div className="h-5 w-32 animate-pulse rounded bg-gray-200 dark:bg-dark-surface" />
+    </div>
+  </div>
+);
+
+// ── AppLayout props ────────────────────────────────────────────────────────
+
+interface AppLayoutProps {
+  authUser: User;
+  onLogout: () => Promise<void>;
+}
+
+// ── Inner app layout — only rendered when authenticated ────────────────────
+
+const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,22 +113,14 @@ const AppLayout: React.FC = () => {
 
   // ── Derived data ────────────────────────────────────────────────────────
   const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
-  const currentUser = users[0] || {
-    id: "temp",
-    name: "Loading...",
-    email: "",
-    role: "",
-    avatar: "",
-  };
+  const currentUser = authUser;
 
   const sprintTasks = useMemo(() => {
     let filtered = tasks.filter((t) => t.sprintId === currentSprintId);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          t.key.toLowerCase().includes(q),
+        (t) => t.title.toLowerCase().includes(q) || t.key.toLowerCase().includes(q),
       );
     }
     if (showMyTasksOnly) {
@@ -152,7 +165,7 @@ const AppLayout: React.FC = () => {
   const getCurrentDateFormatted = () =>
     new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-  // ── Mutation handlers (unchanged logic, added toast feedback) ────────────
+  // ── Mutation handlers ────────────────────────────────────────────────────
 
   const handleCreateTask = useCallback(
     async (newTask: Partial<Task>) => {
@@ -193,7 +206,6 @@ const AppLayout: React.FC = () => {
 
   const handleUpdateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     setTasks((prev) => {
-      // If status changed, auto-assign order to end of target column
       if (updates.status) {
         const maxOrder = prev
           .filter((t) => t.status === updates.status && t.id !== taskId)
@@ -259,24 +271,19 @@ const AppLayout: React.FC = () => {
     [toast, handleCloseModal],
   );
 
-  const handleUpdateComment = useCallback(
-    async (commentId: string, text: string) => {
-      setTasks((prev) =>
-        prev.map((t) => ({
-          ...t,
-          comments: (t.comments || []).map((c) =>
-            c.id === commentId ? { ...c, text } : c,
-          ),
-        })),
-      );
-      try {
-        await api.updateComment(commentId, { text });
-      } catch {
-        console.warn("API unavailable — comment update local only");
-      }
-    },
-    [],
-  );
+  const handleUpdateComment = useCallback(async (commentId: string, text: string) => {
+    setTasks((prev) =>
+      prev.map((t) => ({
+        ...t,
+        comments: (t.comments || []).map((c) => (c.id === commentId ? { ...c, text } : c)),
+      })),
+    );
+    try {
+      await api.updateComment(commentId, { text });
+    } catch {
+      console.warn("API unavailable — comment update local only");
+    }
+  }, []);
 
   const handleDeleteComment = useCallback(
     async (commentId: string) => {
@@ -492,6 +499,7 @@ const AppLayout: React.FC = () => {
         isDark={isDark}
         toggleTheme={toggleTheme}
         currentUser={currentUser}
+        onLogout={onLogout}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -552,17 +560,54 @@ const AppLayout: React.FC = () => {
   );
 };
 
-// ── Root App — BrowserRouter + ToastProvider ───────────────────────────────
+// ── Root App — auth gate + BrowserRouter + ToastProvider ────────────────────
 
-const App: React.FC = () => (
-  <BrowserRouter>
-    <ToastProvider>
-      <Routes>
-        <Route path="/" element={<Navigate to="/board" replace />} />
-        <Route path="/*" element={<AppLayout />} />
-      </Routes>
-    </ToastProvider>
-  </BrowserRouter>
-);
+const App: React.FC = () => {
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const me = await api.fetchMe();
+        setAuthUser(me);
+      } catch {
+        setAuthUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    initAuth();
+  }, []);
+
+  const handleLogin = useCallback(async (email: string, password: string) => {
+    const user = await api.login(email, password);
+    setAuthUser(user);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await api.logout();
+    setAuthUser(null);
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <ToastProvider>
+        {authLoading ? (
+          <LoginSplash />
+        ) : authUser ? (
+          <Routes>
+            <Route path="/" element={<Navigate to="/board" replace />} />
+            <Route path="/*" element={<AppLayout authUser={authUser} onLogout={handleLogout} />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route path="/*" element={<LoginPage onLogin={handleLogin} />} />
+          </Routes>
+        )}
+      </ToastProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;

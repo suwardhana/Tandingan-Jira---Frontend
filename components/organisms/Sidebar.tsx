@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ViewMode, User } from "../../types";
 import Avatar from "../atoms/Avatar";
 
@@ -8,6 +8,7 @@ interface SidebarProps {
   isDark: boolean;
   toggleTheme: () => void;
   currentUser: User;
+  onLogout: () => Promise<void>;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -21,7 +22,8 @@ const navItems: { id: ViewMode; icon: string; label: string }[] = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = React.memo(
-  ({ currentView, onViewChange, isDark, toggleTheme, currentUser, isOpen, onClose }) => {
+  ({ currentView, onViewChange, isDark, toggleTheme, currentUser, onLogout, isOpen, onClose }) => {
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const handleNavClick = (view: ViewMode) => {
       onViewChange(view);
       onClose();
@@ -107,17 +109,48 @@ const Sidebar: React.FC<SidebarProps> = React.memo(
           </button>
 
           {/* User profile */}
-          <div className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-jira-sidebar-hover md:justify-center lg:justify-start">
-            <Avatar
-              src={currentUser.avatar}
-              name={currentUser.name}
-              size="sm"
-              className="shrink-0 ring-1 ring-blue-300"
-            />
-            <div className="hidden min-w-0 flex-col lg:flex">
-              <p className="truncate text-xs font-semibold text-white">{currentUser.name}</p>
-              <p className="truncate text-2xs text-blue-200">{currentUser.role}</p>
-            </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-jira-sidebar-hover md:justify-center lg:justify-start"
+            >
+              <Avatar
+                src={currentUser.avatar}
+                name={currentUser.name}
+                size="sm"
+                className="shrink-0 ring-1 ring-blue-300"
+              />
+              <div className="hidden min-w-0 flex-col lg:flex">
+                <p className="truncate text-xs font-semibold text-white">{currentUser.name}</p>
+                <p className="truncate text-2xs text-blue-200">{currentUser.role}</p>
+              </div>
+            </button>
+
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-50" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute bottom-full left-2 z-50 mb-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-modal dark:border-dark-border dark:bg-dark-surface">
+                  <div className="border-b border-gray-100 px-3 py-2 dark:border-dark-border">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      {currentUser.name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {currentUser.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setShowUserMenu(false);
+                      await onLogout();
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-dark-bg"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span>
+                    Log out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>

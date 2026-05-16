@@ -6,6 +6,9 @@ const headers = {
   "Content-Type": "application/json",
 };
 
+const request = (path: string, options: RequestInit = {}): Promise<Response> =>
+  fetch(`${BASE_URL}${path}`, { ...options, credentials: "include" });
+
 // Utility functions to convert between snake_case and camelCase
 const snakeToCamel = (str: string): string =>
   str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -34,16 +37,42 @@ const fromApi = <T>(data: any): T => transformKeys<T>(data, snakeToCamel);
 const toApi = <T>(data: any): T => transformKeys<T>(data, camelToSnake);
 
 export const api = {
-  // Users
+  // ── Auth ─────────────────────────────────────────────────────────────────
+
+  login: async (email: string, password: string): Promise<User> => {
+    const res = await request("/auth/login", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Login failed");
+    }
+    return fromApi<User>(await res.json());
+  },
+
+  logout: async (): Promise<void> => {
+    await request("/auth/logout", { method: "POST" });
+  },
+
+  fetchMe: async (): Promise<User> => {
+    const res = await request("/auth/me");
+    if (!res.ok) throw new Error("Not authenticated");
+    return fromApi<User>(await res.json());
+  },
+
+  // ── Users ───────────────────────────────────────────────────────────────
+
   fetchUsers: async (): Promise<User[]> => {
-    const res = await fetch(`${BASE_URL}/users`);
+    const res = await request("/users");
     if (!res.ok) throw new Error("Failed to fetch users");
     const data = await res.json();
     return fromApi<User[]>(data);
   },
 
   createUser: async (user: Partial<User>): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/users`, {
+    const res = await request("/users", {
       method: "POST",
       headers,
       body: JSON.stringify(toApi(user)),
@@ -54,14 +83,14 @@ export const api = {
   },
 
   fetchUser: async (id: string): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/users/${id}`);
+    const res = await request(`/users/${id}`);
     if (!res.ok) throw new Error("Failed to fetch user");
     const data = await res.json();
     return fromApi<User>(data);
   },
 
   updateUser: async (id: string, updates: Partial<User>): Promise<User> => {
-    const res = await fetch(`${BASE_URL}/users/${id}`, {
+    const res = await request(`/users/${id}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(toApi(updates)),
@@ -72,20 +101,21 @@ export const api = {
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/users/${id}`, { method: "DELETE" });
+    const res = await request(`/users/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete user");
   },
 
-  // Sprints
+  // ── Sprints ─────────────────────────────────────────────────────────────
+
   fetchSprints: async (): Promise<Sprint[]> => {
-    const res = await fetch(`${BASE_URL}/sprints`);
+    const res = await request("/sprints");
     if (!res.ok) throw new Error("Failed to fetch sprints");
     const data = await res.json();
     return fromApi<Sprint[]>(data);
   },
 
   createSprint: async (sprint: Partial<Sprint>): Promise<Sprint> => {
-    const res = await fetch(`${BASE_URL}/sprints`, {
+    const res = await request("/sprints", {
       method: "POST",
       headers,
       body: JSON.stringify(toApi(sprint)),
@@ -96,7 +126,7 @@ export const api = {
   },
 
   updateSprint: async (id: string, updates: Partial<Sprint>): Promise<Sprint> => {
-    const res = await fetch(`${BASE_URL}/sprints/${id}`, {
+    const res = await request(`/sprints/${id}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(toApi(updates)),
@@ -107,27 +137,28 @@ export const api = {
   },
 
   fetchSprint: async (id: string): Promise<Sprint> => {
-    const res = await fetch(`${BASE_URL}/sprints/${id}`);
+    const res = await request(`/sprints/${id}`);
     if (!res.ok) throw new Error("Failed to fetch sprint");
     const data = await res.json();
     return fromApi<Sprint>(data);
   },
 
   deleteSprint: async (id: string): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/sprints/${id}`, { method: "DELETE" });
+    const res = await request(`/sprints/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete sprint");
   },
 
-  // Tasks
+  // ── Tasks ───────────────────────────────────────────────────────────────
+
   fetchTasks: async (): Promise<Task[]> => {
-    const res = await fetch(`${BASE_URL}/tasks`);
+    const res = await request("/tasks");
     if (!res.ok) throw new Error("Failed to fetch tasks");
     const data = await res.json();
     return fromApi<Task[]>(data);
   },
 
   createTask: async (task: Partial<Task>): Promise<Task> => {
-    const res = await fetch(`${BASE_URL}/tasks`, {
+    const res = await request("/tasks", {
       method: "POST",
       headers,
       body: JSON.stringify(toApi(task)),
@@ -138,8 +169,8 @@ export const api = {
   },
 
   updateTask: async (id: string, updates: Partial<Task>): Promise<Task> => {
-    const res = await fetch(`${BASE_URL}/tasks/${id}`, {
-      method: "PUT", // or PATCH depending on your backend
+    const res = await request(`/tasks/${id}`, {
+      method: "PUT",
       headers,
       body: JSON.stringify(toApi(updates)),
     });
@@ -149,21 +180,19 @@ export const api = {
   },
 
   fetchTask: async (id: string): Promise<Task> => {
-    const res = await fetch(`${BASE_URL}/tasks/${id}`);
+    const res = await request(`/tasks/${id}`);
     if (!res.ok) throw new Error("Failed to fetch task");
     const data = await res.json();
     return fromApi<Task>(data);
   },
 
   deleteTask: async (id: string): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/tasks/${id}`, {
-      method: "DELETE",
-    });
+    const res = await request(`/tasks/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete task");
   },
 
   reorderTasks: async (status: string, taskIds: string[]): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/tasks/reorder`, {
+    const res = await request("/tasks/reorder", {
       method: "PUT",
       headers,
       body: JSON.stringify(toApi({ status, taskIds })),
@@ -171,16 +200,17 @@ export const api = {
     if (!res.ok) throw new Error("Failed to reorder tasks");
   },
 
-  // Subtasks
+  // ── Subtasks ────────────────────────────────────────────────────────────
+
   fetchSubtasks: async (taskId: string): Promise<Subtask[]> => {
-    const res = await fetch(`${BASE_URL}/tasks/${taskId}/subtasks`);
+    const res = await request(`/tasks/${taskId}/subtasks`);
     if (!res.ok) throw new Error("Failed to fetch subtasks");
     const data = await res.json();
     return fromApi<Subtask[]>(data);
   },
 
   createSubtask: async (taskId: string, subtask: Partial<Subtask>): Promise<Subtask> => {
-    const res = await fetch(`${BASE_URL}/tasks/${taskId}/subtasks`, {
+    const res = await request(`/tasks/${taskId}/subtasks`, {
       method: "POST",
       headers,
       body: JSON.stringify(toApi(subtask)),
@@ -191,7 +221,7 @@ export const api = {
   },
 
   updateSubtask: async (id: string, updates: Partial<Subtask>): Promise<Subtask> => {
-    const res = await fetch(`${BASE_URL}/subtasks/${id}`, {
+    const res = await request(`/subtasks/${id}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(toApi(updates)),
@@ -202,22 +232,21 @@ export const api = {
   },
 
   deleteSubtask: async (id: string): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/subtasks/${id}`, {
-      method: "DELETE",
-    });
+    const res = await request(`/subtasks/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete subtask");
   },
 
-  // Comments
+  // ── Comments ────────────────────────────────────────────────────────────
+
   fetchComments: async (taskId: string): Promise<Comment[]> => {
-    const res = await fetch(`${BASE_URL}/tasks/${taskId}/comments`);
+    const res = await request(`/tasks/${taskId}/comments`);
     if (!res.ok) throw new Error("Failed to fetch comments");
     const data = await res.json();
     return fromApi<Comment[]>(data);
   },
 
   createComment: async (taskId: string, comment: Partial<Comment>): Promise<Comment> => {
-    const res = await fetch(`${BASE_URL}/tasks/${taskId}/comments`, {
+    const res = await request(`/tasks/${taskId}/comments`, {
       method: "POST",
       headers,
       body: JSON.stringify(toApi(comment)),
@@ -228,7 +257,7 @@ export const api = {
   },
 
   updateComment: async (id: string, updates: Partial<Comment>): Promise<Comment> => {
-    const res = await fetch(`${BASE_URL}/comments/${id}`, {
+    const res = await request(`/comments/${id}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(toApi(updates)),
@@ -239,9 +268,7 @@ export const api = {
   },
 
   deleteComment: async (id: string): Promise<void> => {
-    const res = await fetch(`${BASE_URL}/comments/${id}`, {
-      method: "DELETE",
-    });
+    const res = await request(`/comments/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete comment");
   },
 };

@@ -12,12 +12,12 @@ All JSON uses **snake_case** on the wire. The frontend transforms to camelCase i
 
 ### Enums
 
-| Enum | Wire Values |
-|---|---|
-| `Priority` | `"Low"`, `"Medium"`, `"High"`, `"Critical"` |
-| `Status` | `"To Do"`, `"In Progress"`, `"Review"`, `"Done"` |
-| `IssueType` | `"Task"`, `"Bug"` |
-| `SprintStatus` | `"active"`, `"future"`, `"closed"` |
+| Enum           | Wire Values                                      |
+| -------------- | ------------------------------------------------ |
+| `Priority`     | `"Low"`, `"Medium"`, `"High"`, `"Critical"`      |
+| `Status`       | `"To Do"`, `"In Progress"`, `"Review"`, `"Done"` |
+| `IssueType`    | `"Task"`, `"Bug"`                                |
+| `SprintStatus` | `"active"`, `"future"`, `"closed"`               |
 
 ### Core Entities
 
@@ -349,18 +349,18 @@ Every UI action → handler → API call, organized by component.
 
 ### 3.1 App.tsx (initial load)
 
-| Trigger | Handler | API Call |
-|---|---|---|
-| App mount `useEffect` | inline | `GET /api/users`, `GET /api/tasks`, `GET /api/sprints` (parallel) |
+| Trigger               | Handler | API Call                                                          |
+| --------------------- | ------- | ----------------------------------------------------------------- |
+| App mount `useEffect` | inline  | `GET /api/users`, `GET /api/tasks`, `GET /api/sprints` (parallel) |
 
 ### 3.2 Header
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
-| Sprint `<select>` change | `onSprintChange` → `setCurrentSprintId` | None (client-side filter) |
-| Search `<input>` type | `onSearch` → `setSearchQuery` | None (client-side filter) |
-| Create button (blue) | `onCreateClick` → `openCreateModal` | None (opens CreateIssueModal via URL) |
-| New sprint `+` button → opens `NewSprintDialog` | `onCreateSprint` → `handleCreateSprint` | `POST /api/sprints` |
+| UI Element                                      | Handler Prop                            | API Call                              |
+| ----------------------------------------------- | --------------------------------------- | ------------------------------------- |
+| Sprint `<select>` change                        | `onSprintChange` → `setCurrentSprintId` | None (client-side filter)             |
+| Search `<input>` type                           | `onSearch` → `setSearchQuery`           | None (client-side filter)             |
+| Create button (blue)                            | `onCreateClick` → `openCreateModal`     | None (opens CreateIssueModal via URL) |
+| New sprint `+` button → opens `NewSprintDialog` | `onCreateSprint` → `handleCreateSprint` | `POST /api/sprints`                   |
 
 ### 3.3 Sidebar
 
@@ -368,64 +368,64 @@ No API calls. Pure routing and theme toggle.
 
 ### 3.4 BoardView
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
-| Task card click | `onTaskClick` → `handleTaskClick` | None (URL navigation to task detail) |
-| Cross-column drag-and-drop | `onTaskUpdate` → `handleUpdateTask` | `PUT /api/tasks/:id` (status + order) |
-| Same-column drag-and-drop | `onReorder` → `handleReorder` | **None currently** — should call `PUT /api/tasks/reorder` |
-| Start Sprint button | `onStartSprint` → `handleStartSprint` | `PUT /api/sprints/:id` (`{ "status": "active" }`) |
-| Complete Sprint button | `onCompleteSprint` → `handleCompleteSprint` | `PUT /api/sprints/:id` (`{ "status": "closed" }`) |
-| Assignee filter avatars | `onFilterAssignee` → `setFilterAssigneeId` | None (client-side) |
-| "Mine" filter toggle | `onToggleMyTasks` → `setShowMyTasksOnly` | None (client-side) |
+| UI Element                 | Handler Prop                                | API Call                                                  |
+| -------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Task card click            | `onTaskClick` → `handleTaskClick`           | None (URL navigation to task detail)                      |
+| Cross-column drag-and-drop | `onTaskUpdate` → `handleUpdateTask`         | `PUT /api/tasks/:id` (status + order)                     |
+| Same-column drag-and-drop  | `onReorder` → `handleReorder`               | **None currently** — should call `PUT /api/tasks/reorder` |
+| Start Sprint button        | `onStartSprint` → `handleStartSprint`       | `PUT /api/sprints/:id` (`{ "status": "active" }`)         |
+| Complete Sprint button     | `onCompleteSprint` → `handleCompleteSprint` | `PUT /api/sprints/:id` (`{ "status": "closed" }`)         |
+| Assignee filter avatars    | `onFilterAssignee` → `setFilterAssigneeId`  | None (client-side)                                        |
+| "Mine" filter toggle       | `onToggleMyTasks` → `setShowMyTasksOnly`    | None (client-side)                                        |
 
 ### 3.5 ListView
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
-| Task row click | `onTaskClick` → `handleTaskClick` | None (URL navigation) |
+| UI Element                   | Handler Prop                        | API Call                      |
+| ---------------------------- | ----------------------------------- | ----------------------------- |
+| Task row click               | `onTaskClick` → `handleTaskClick`   | None (URL navigation)         |
 | Create issue button (footer) | `onCreateClick` → `openCreateModal` | None (opens CreateIssueModal) |
-| Assignee/Mine filters | same as BoardView | None |
+| Assignee/Mine filters        | same as BoardView                   | None                          |
 
 ### 3.6 IssueModal (task detail)
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
-| Title inline edit (keystrokes) | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Type picker (Task/Bug) | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Status step buttons (4 columns) | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Description Save button | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Label add (Enter) | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Label remove (X) | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Assignee `<select>` | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Priority `<select>` | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Due date `<input>` | `onUpdateTask` → `handleUpdateTask` | `PUT /api/tasks/:id` |
-| Comment Save button | `onAddComment` → `handleAddComment` | `POST /api/tasks/:id/comments` |
-| Subtask input Enter/check | `onAddSubtask` → `handleAddSubtask` | `POST /api/tasks/:id/subtasks` |
-| Subtask checkbox toggle | `onToggleSubtask` → `handleToggleSubtask` | `PUT /api/subtasks/:id` |
-| Subtask delete (trash) | `onDeleteSubtask` → `handleDeleteSubtask` | `DELETE /api/subtasks/:id` |
+| UI Element                      | Handler Prop                              | API Call                       |
+| ------------------------------- | ----------------------------------------- | ------------------------------ |
+| Title inline edit (keystrokes)  | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Type picker (Task/Bug)          | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Status step buttons (4 columns) | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Description Save button         | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Label add (Enter)               | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Label remove (X)                | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Assignee `<select>`             | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Priority `<select>`             | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Due date `<input>`              | `onUpdateTask` → `handleUpdateTask`       | `PUT /api/tasks/:id`           |
+| Comment Save button             | `onAddComment` → `handleAddComment`       | `POST /api/tasks/:id/comments` |
+| Subtask input Enter/check       | `onAddSubtask` → `handleAddSubtask`       | `POST /api/tasks/:id/subtasks` |
+| Subtask checkbox toggle         | `onToggleSubtask` → `handleToggleSubtask` | `PUT /api/subtasks/:id`        |
+| Subtask delete (trash)          | `onDeleteSubtask` → `handleDeleteSubtask` | `DELETE /api/subtasks/:id`     |
 
 ### 3.7 CreateIssueModal
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
+| UI Element                 | Handler Prop                    | API Call          |
+| -------------------------- | ------------------------------- | ----------------- |
 | Create Issue submit button | `onCreate` → `handleCreateTask` | `POST /api/tasks` |
 
 ### 3.8 AddMemberModal
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
+| UI Element               | Handler Prop                | API Call          |
+| ------------------------ | --------------------------- | ----------------- |
 | Add Member submit button | `onAdd` → `handleAddMember` | `POST /api/users` |
 
 ### 3.9 NewSprintDialog
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
+| UI Element           | Handler Prop                      | API Call            |
+| -------------------- | --------------------------------- | ------------------- |
 | Create Sprint button | `onCreate` → `handleCreateSprint` | `POST /api/sprints` |
 
 ### 3.10 TeamView
 
-| UI Element | Handler Prop | API Call |
-|---|---|---|
+| UI Element        | Handler Prop                                         | API Call           |
+| ----------------- | ---------------------------------------------------- | ------------------ |
 | Add Member button | `onAddMemberClick` → `setIsAddMemberModalOpen(true)` | None (opens modal) |
 
 ### 3.11 ReportsView, SettingsView, TaskCard
@@ -438,20 +438,21 @@ No API calls. Display-only or local-only.
 
 These API functions exist in `api.ts` but have no UI to trigger them:
 
-| API Function | Endpoint | What Needs a Button |
-|---|---|---|
-| `api.deleteTask(id)` | `DELETE /api/tasks/:id` | Add delete option to IssueModal "..." menu |
-| `api.updateComment(id, updates)` | `PUT /api/comments/:id` | Add edit button on each comment |
-| `api.deleteComment(id)` | `DELETE /api/comments/:id` | Add delete button on each comment |
-| `api.fetchComments(taskId)` | `GET /api/tasks/:id/comments` | Not needed if comments come embedded in Task |
-| `api.fetchSubtasks(taskId)` | `GET /api/tasks/:id/subtasks` | Not needed if subtasks come embedded in Task |
-| `handleReorder` | `PUT /api/tasks/reorder` | BoardView same-column drag currently only updates local state |
+| API Function                     | Endpoint                      | What Needs a Button                                           |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------- |
+| `api.deleteTask(id)`             | `DELETE /api/tasks/:id`       | Add delete option to IssueModal "..." menu                    |
+| `api.updateComment(id, updates)` | `PUT /api/comments/:id`       | Add edit button on each comment                               |
+| `api.deleteComment(id)`          | `DELETE /api/comments/:id`    | Add delete button on each comment                             |
+| `api.fetchComments(taskId)`      | `GET /api/tasks/:id/comments` | Not needed if comments come embedded in Task                  |
+| `api.fetchSubtasks(taskId)`      | `GET /api/tasks/:id/subtasks` | Not needed if subtasks come embedded in Task                  |
+| `handleReorder`                  | `PUT /api/tasks/reorder`      | BoardView same-column drag currently only updates local state |
 
 ---
 
 ## 5. Backend Implementation Order (Recommended)
 
 ### Phase 1 — Core CRUD (MVP)
+
 1. `GET /api/users` + `POST /api/users`
 2. `GET /api/sprints` + `POST /api/sprints` + `PUT /api/sprints/:id`
 3. `GET /api/tasks` + `POST /api/tasks` + `PUT /api/tasks/:id` + `DELETE /api/tasks/:id`
@@ -459,6 +460,7 @@ These API functions exist in `api.ts` but have no UI to trigger them:
 5. `POST /api/tasks/:id/subtasks` + `PUT /api/subtasks/:id` + `DELETE /api/subtasks/:id`
 
 ### Phase 2 — Completeness
+
 6. `PUT /api/tasks/reorder` (bulk reorder)
 7. `GET /api/users/:id` + `PUT /api/users/:id` + `DELETE /api/users/:id`
 8. `GET /api/sprints/:id` + `DELETE /api/sprints/:id`
@@ -466,6 +468,7 @@ These API functions exist in `api.ts` but have no UI to trigger them:
 10. Server-side filtering on `GET /api/tasks` (query params)
 
 ### Phase 3 — Polish
+
 11. `GET /api/tasks/:id` (single task with all relations)
 12. Attachment upload endpoint
 13. Authentication/authorization layer
@@ -492,6 +495,7 @@ These API functions exist in `api.ts` but have no UI to trigger them:
 ## 7. Verification
 
 ### Backend Verification
+
 - Start backend on `http://localhost:3344/api`
 - Run `bun run dev` and verify the app loads without falling back to mock data (check browser console — no "fetch failed, using mock data" log)
 - Create a task via the UI → verify it appears in board view → refresh → still there
@@ -501,6 +505,7 @@ These API functions exist in `api.ts` but have no UI to trigger them:
 - Add a subtask → toggle it → delete it → verify
 
 ### Frontend Verification (after wiring gaps)
+
 - Delete a task from IssueModal → verify it disappears from board
 - Edit/delete a comment → verify changes persist
 - Same-column drag reorder → verify order persists on refresh (requires `PUT /api/tasks/reorder`)

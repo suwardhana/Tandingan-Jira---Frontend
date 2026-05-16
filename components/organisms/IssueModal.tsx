@@ -262,65 +262,58 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
 
             {/* Status breadcrumb */}
             <div className="flex items-center gap-0">
-              {[Status.TODO, Status.IN_PROGRESS, Status.REVIEW, Status.DONE].map(
-                (s, i) => {
-                  const statusOrder = [
-                    Status.TODO,
-                    Status.IN_PROGRESS,
-                    Status.REVIEW,
-                    Status.DONE,
-                  ];
-                  const currentIdx = statusOrder.indexOf(task.status);
-                  const stepIdx = statusOrder.indexOf(s);
-                  const isCompleted = stepIdx <= currentIdx;
-                  const isDone = task.status === Status.DONE;
+              {[Status.TODO, Status.IN_PROGRESS, Status.REVIEW, Status.DONE].map((s, i) => {
+                const statusOrder = [Status.TODO, Status.IN_PROGRESS, Status.REVIEW, Status.DONE];
+                const currentIdx = statusOrder.indexOf(task.status);
+                const stepIdx = statusOrder.indexOf(s);
+                const isCompleted = stepIdx <= currentIdx;
+                const isDone = task.status === Status.DONE;
 
-                  return (
-                    <React.Fragment key={s}>
-                      {i > 0 && (
-                        <div
-                          className={`mx-0.5 h-px w-4 ${
-                            stepIdx <= currentIdx
-                              ? isDone
-                                ? "bg-green-500"
-                                : "bg-blue-500"
-                              : "bg-gray-300 dark:bg-slate-600"
-                          }`}
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Clicking the current step unchecks (moves to previous), except To Do
-                          if (s === task.status && s !== Status.TODO) {
-                            const prev = statusOrder[stepIdx - 1];
-                            onUpdateTask(task.id, { status: prev });
-                          } else {
-                            onUpdateTask(task.id, { status: s });
-                          }
-                        }}
-                        className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-all ${
-                          isCompleted
+                return (
+                  <React.Fragment key={s}>
+                    {i > 0 && (
+                      <div
+                        className={`mx-0.5 h-px w-4 ${
+                          stepIdx <= currentIdx
                             ? isDone
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-blue-600 dark:text-blue-400"
-                            : "text-slate-400 dark:text-slate-500"
-                        } hover:bg-gray-100 dark:hover:bg-slate-700/50`}
-                        title={s}
+                              ? "bg-green-500"
+                              : "bg-blue-500"
+                            : "bg-gray-300 dark:bg-slate-600"
+                        }`}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Clicking the current step unchecks (moves to previous), except To Do
+                        if (s === task.status && s !== Status.TODO) {
+                          const prev = statusOrder[stepIdx - 1];
+                          onUpdateTask(task.id, { status: prev });
+                        } else {
+                          onUpdateTask(task.id, { status: s });
+                        }
+                      }}
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-all ${
+                        isCompleted
+                          ? isDone
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-blue-600 dark:text-blue-400"
+                          : "text-slate-400 dark:text-slate-500"
+                      } hover:bg-gray-100 dark:hover:bg-slate-700/50`}
+                      title={s}
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[16px] ${
+                          isCompleted ? "fill-icon" : ""
+                        }`}
                       >
-                        <span
-                          className={`material-symbols-outlined text-[16px] ${
-                            isCompleted ? "fill-icon" : ""
-                          }`}
-                        >
-                          {isCompleted ? "check_circle" : "circle"}
-                        </span>
-                        <span className="hidden sm:inline">{s}</span>
-                      </button>
-                    </React.Fragment>
-                  );
-                },
-              )}
+                        {isCompleted ? "check_circle" : "circle"}
+                      </span>
+                      <span className="hidden sm:inline">{s}</span>
+                    </button>
+                  </React.Fragment>
+                );
+              })}
             </div>
 
             <div className="flex items-center gap-2">
@@ -409,7 +402,7 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                       <div className="group relative min-h-[80px] rounded-lg p-4 transition-all dark:border-dark-border">
                         {task.description ? (
                           <div
-                            className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                            className="prose prose-sm max-w-none text-sm dark:prose-invert"
                             dangerouslySetInnerHTML={{
                               __html: renderMarkdown(task.description),
                             }}
@@ -620,7 +613,9 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                                       onClick={() => handleEditCommentSave(comment.id)}
                                       className="text-blue-600 hover:text-blue-700"
                                     >
-                                      <span className="material-symbols-outlined text-[18px]">check</span>
+                                      <span className="material-symbols-outlined text-[18px]">
+                                        check
+                                      </span>
                                     </button>
                                     <button
                                       onClick={() => {
@@ -629,7 +624,9 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                                       }}
                                       className="text-slate-400 hover:text-slate-600"
                                     >
-                                      <span className="material-symbols-outlined text-[18px]">close</span>
+                                      <span className="material-symbols-outlined text-[18px]">
+                                        close
+                                      </span>
                                     </button>
                                   </div>
                                 ) : (
@@ -645,14 +642,18 @@ const IssueModal: React.FC<IssueModalProps> = React.memo(
                                     className="rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                                     title="Edit comment"
                                   >
-                                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                                    <span className="material-symbols-outlined text-[16px]">
+                                      edit
+                                    </span>
                                   </button>
                                   <button
                                     onClick={() => onDeleteComment?.(comment.id)}
                                     className="rounded p-1 text-slate-400 hover:text-red-500"
                                     title="Delete comment"
                                   >
-                                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                                    <span className="material-symbols-outlined text-[16px]">
+                                      delete
+                                    </span>
                                   </button>
                                 </div>
                               )}

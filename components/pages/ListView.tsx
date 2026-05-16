@@ -32,13 +32,13 @@ const ListView: React.FC<ListViewProps> = React.memo(
       <div className="flex h-full flex-col overflow-hidden px-3 pb-20 sm:px-6">
         {/* Filter bar */}
         <div className="mb-3 flex items-center gap-2">
-          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">Filter</span>
+          <span className="mr-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+            Filter
+          </span>
           {users.map((u) => (
             <button
               key={u.id}
-              onClick={() =>
-                onFilterAssignee(filterAssigneeId === u.id ? null : u.id)
-              }
+              onClick={() => onFilterAssignee(filterAssigneeId === u.id ? null : u.id)}
               className={`shrink-0 rounded-full transition-all hover:ring-2 hover:ring-jira-blue/50 ${
                 filterAssigneeId === u.id ? "ring-2 ring-jira-blue" : "opacity-60 hover:opacity-100"
               }`}

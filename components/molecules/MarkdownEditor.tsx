@@ -25,11 +25,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
   { icon: "checklist", title: "Add a task list", prefix: "\n- [ ] ", suffix: "" },
 ];
 
-function insertMarkdown(
-  textarea: HTMLTextAreaElement,
-  prefix: string,
-  suffix: string,
-): void {
+function insertMarkdown(textarea: HTMLTextAreaElement, prefix: string, suffix: string): void {
   const { selectionStart, selectionEnd, value } = textarea;
   const selectedText = value.substring(selectionStart, selectionEnd);
   const replacement = prefix + selectedText + suffix;
@@ -145,9 +141,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         >
           Preview
         </button>
-        {headerRight && (
-          <div className="ml-auto flex items-center gap-2 pr-2">{headerRight}</div>
-        )}
+        {headerRight && <div className="ml-auto flex items-center gap-2 pr-2">{headerRight}</div>}
       </div>
 
       {/* Toolbar (Write mode only) */}
@@ -189,7 +183,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         />
       ) : (
         <div
-          className="prose prose-sm dark:prose-invert max-w-none p-3 text-sm"
+          className="prose prose-sm max-w-none p-3 text-sm dark:prose-invert"
           style={{ minHeight: `${rows * 24 + 24}px` }}
           dangerouslySetInnerHTML={{ __html: renderedPreview }}
         />
