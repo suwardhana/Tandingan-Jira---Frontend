@@ -23,6 +23,7 @@ export interface User {
   avatar: string;
   email: string;
   role?: string;
+  password?: string;
 }
 
 export interface Comment {

@@ -305,12 +305,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
 
   const handleAddMember = useCallback(
     async (user: Partial<User>) => {
-      const newUser: User = {
+      const newUser = {
         id: `u${Date.now()}`,
         name: user.name || "New Member",
         email: user.email || "",
         avatar: user.avatar || "",
         role: user.role || "Member",
+        password: "changeme123",
       };
       setUsers((prev) => [...prev, newUser]);
       try {
