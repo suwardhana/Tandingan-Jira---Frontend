@@ -150,8 +150,9 @@ export const api = {
 
   // ── Tasks ───────────────────────────────────────────────────────────────
 
-  fetchTasks: async (): Promise<Task[]> => {
-    const res = await request("/tasks");
+  fetchTasks: async (sprintId?: string): Promise<Task[]> => {
+    const params = sprintId ? `?sprint_id=${encodeURIComponent(sprintId)}` : "";
+    const res = await request(`/tasks${params}`);
     if (!res.ok) throw new Error("Failed to fetch tasks");
     const data = await res.json();
     return fromApi<Task[]>(data);

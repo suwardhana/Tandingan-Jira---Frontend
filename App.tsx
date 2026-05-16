@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -68,16 +68,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [currentSprintId, setCurrentSprintId] = useState<string>("");
   const [dataReady, setDataReady] = useState(false);
 
-  // ── Derive view + modal state from URL ──────────────────────────────────
+  // ── Derive view + modal + sprint state from URL ──────────────────────────
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const currentView: ViewMode = (
     ["board", "backlog", "list", "reports", "team", "settings"].includes(pathSegments[0])
       ? pathSegments[0]
       : "board"
   ) as ViewMode;
+
+  const currentSprintId = useMemo(() => {
+    const fromUrl = searchParams.get("sprint");
+    if (fromUrl && sprints.some((s) => s.id === fromUrl)) return fromUrl;
+    return sprints.find((s) => s.status === "active")?.id || sprints[0]?.id || "";
+  }, [searchParams, sprints]);
 
   const taskKey = pathSegments[1] === "task" ? pathSegments[2] : undefined;
   const selectedTask = useMemo(() => {
@@ -88,6 +93,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
   const showCreate = searchParams.get("create") === "true";
 
   // ── Initial data load ───────────────────────────────────────────────────
+  const didFirstLoad = useRef(false);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -99,23 +106,52 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
         setUsers(fetchedUsers);
         setTasks(fetchedTasks);
         setSprints(fetchedSprints);
-        if (fetchedSprints.length > 0)
-          setCurrentSprintId(
-            fetchedSprints.find((s) => s.status === "active")?.id || fetchedSprints[0].id,
-          );
+        if (fetchedSprints.length > 0) {
+          const defaultId =
+            fetchedSprints.find((s) => s.status === "active")?.id || fetchedSprints[0].id;
+          if (!searchParams.get("sprint")) {
+            const params = new URLSearchParams(searchParams);
+            params.set("sprint", defaultId);
+            setSearchParams(params, { replace: true });
+          }
+        }
       } catch {
         console.warn("API unavailable — using mock data from constants.ts");
         setUsers(USERS);
         setTasks(TASKS);
         setSprints(SPRINTS);
-        if (SPRINTS.length > 0)
-          setCurrentSprintId(SPRINTS.find((s) => s.status === "active")?.id || SPRINTS[0].id);
+        if (SPRINTS.length > 0) {
+          const defaultId =
+            SPRINTS.find((s) => s.status === "active")?.id || SPRINTS[0].id;
+          if (!searchParams.get("sprint")) {
+            const params = new URLSearchParams(searchParams);
+            params.set("sprint", defaultId);
+            setSearchParams(params, { replace: true });
+          }
+        }
       } finally {
         setDataReady(true);
+        didFirstLoad.current = true;
       }
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Re-fetch tasks when sprint or view changes ────────────────────────
+  useEffect(() => {
+    if (!didFirstLoad.current) return;
+    const refresh = async () => {
+      try {
+        const fetchSprintId = currentView === "backlog" ? undefined : currentSprintId;
+        const fetchedTasks = await api.fetchTasks(fetchSprintId);
+        setTasks(fetchedTasks);
+      } catch {
+        // keep existing data on failure
+      }
+    };
+    refresh();
+  }, [currentSprintId, currentView]);
 
   // ── Derived data ────────────────────────────────────────────────────────
   const currentSprint = sprints.find((s) => s.id === currentSprintId) || sprints[0];
@@ -156,6 +192,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
     [navigate, currentView],
   );
   const handleCloseModal = useCallback(() => navigate(-1), [navigate]);
+  const handleSprintChange = useCallback(
+    (id: string) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("sprint", id);
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
   const openCreateModal = useCallback((sprintId?: string) => {
     if (sprintId) setCreateSprintId(sprintId);
     const params = new URLSearchParams(searchParams);
@@ -587,7 +631,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ authUser, onLogout }) => {
           onCreateClick={openCreateModal}
           sprints={sprints}
           currentSprintId={currentSprintId}
-          onSprintChange={setCurrentSprintId}
+          onSprintChange={handleSprintChange}
           onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
           searchQuery={searchQuery}
           onSearch={setSearchQuery}

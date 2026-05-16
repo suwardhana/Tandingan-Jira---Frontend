@@ -61,7 +61,7 @@ export interface Task {
   type: IssueType;
   assigneeId?: string;
   reporterId: string;
-  sprintId: string;
+  sprintId: string | null;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
